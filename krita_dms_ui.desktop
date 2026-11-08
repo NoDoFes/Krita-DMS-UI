@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=krita_dms_ui
+Name=DMS Modern UI
+Comment=A lightweight UI plugin for dynamic themes and rounded corners.
