@@ -7,7 +7,6 @@ except ImportError:
     from PyQt5.QtCore import Qt
 
 def patch_welcome_page(colors):
-    """修复 Krita 欢迎页 C++ 写死的样式"""
     for win in Krita.instance().windows():
         qwin = win.qwindow()
         new_file_btn = qwin.findChild(QWidget, "newFileLink")
@@ -32,7 +31,6 @@ def patch_welcome_page(colors):
             """)
 
 def fix_menu_edges():
-    """去除菜单原生边框和阴影，让圆角生效"""
     for win in Krita.instance().windows():
         qwin = win.qwindow()
         for widget in qwin.findChildren(QMenu):

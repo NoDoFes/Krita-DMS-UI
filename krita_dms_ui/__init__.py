@@ -39,11 +39,10 @@ class DMSModernUIExtension(Extension):
         
         pal = self.app.palette()
         
-        # 1. 计算颜色并应用 QSS
         colors = get_theme_colors(pal, COLOR_ROLE)
         self.app.setStyleSheet(build_qss(colors))
 
-        # 2. 强制接管底层 QPalette (精简版)
+        # 强制接管全局 Palette
         pal.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
         pal.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
         pal.setColor(COLOR_ROLE.WindowText, QColor(colors["TEXT"]))
@@ -55,11 +54,10 @@ class DMSModernUIExtension(Extension):
         pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.ButtonText, QColor(colors["TEXT_DISABLED"]))
         self.app.setPalette(pal)
 
-        # 3. 执行底层 Hack（欢迎页 + 菜单）
         patch_welcome_page(colors)
         fix_menu_edges()
 
-        # 4. 终极制裁：暴力洗脑所有 QAbstractItemView 及其 Viewport，强制图层文字高对比
+        # 针对图层、通道等 C++ 自绘列表，直接洗脑它们的内部调色板
         for win in Krita.instance().windows():
             for view in win.qwindow().findChildren(QAbstractItemView):
                 p = view.palette()
