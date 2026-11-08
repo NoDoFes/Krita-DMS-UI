@@ -1,0 +1,9 @@
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 本地 AI 打包产物 (如果不想传)
+ai_context_bundle/
+
+# 系统文件
+.DS_Store
