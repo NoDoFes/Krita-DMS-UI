@@ -1,19 +1,18 @@
 from krita import Krita, Extension
 
 try:
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QAbstractItemView
     from PyQt6.QtCore import QTimer
     from PyQt6.QtGui import QPalette, QColor
     COLOR_ROLE = QPalette.ColorRole
     COLOR_GROUP = QPalette.ColorGroup
 except ImportError:
-    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtWidgets import QApplication, QAbstractItemView
     from PyQt5.QtCore import QTimer
     from PyQt5.QtGui import QPalette, QColor
     COLOR_ROLE = QPalette
     COLOR_GROUP = QPalette
 
-# 从我们分离的模块导入
 from .styles import get_theme_colors, build_qss
 from .hacks import patch_welcome_page, fix_menu_edges
 
@@ -44,31 +43,33 @@ class DMSModernUIExtension(Extension):
         colors = get_theme_colors(pal, COLOR_ROLE)
         self.app.setStyleSheet(build_qss(colors))
 
-        # 2. 强制接管底层 QPalette
-        try:
-            pal.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
-            pal.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
-            pal.setColor(COLOR_ROLE.WindowText, QColor(colors["TEXT"]))
-            pal.setColor(COLOR_ROLE.Text, QColor(colors["TEXT"]))
-            pal.setColor(COLOR_ROLE.ButtonText, QColor(colors["TEXT"]))
-            
-            pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.WindowText, QColor(colors["TEXT_DISABLED"]))
-            pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.Text, QColor(colors["TEXT_DISABLED"]))
-            pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.ButtonText, QColor(colors["TEXT_DISABLED"]))
-        except AttributeError:
-            pal.setColor(QPalette.Highlight, QColor(colors["SELECT_BG"]))
-            pal.setColor(QPalette.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
-            pal.setColor(QPalette.WindowText, QColor(colors["TEXT"]))
-            pal.setColor(QPalette.Text, QColor(colors["TEXT"]))
-            pal.setColor(QPalette.ButtonText, QColor(colors["TEXT"]))
-            pal.setColor(QPalette.Disabled, QPalette.WindowText, QColor(colors["TEXT_DISABLED"]))
-            pal.setColor(QPalette.Disabled, QPalette.Text, QColor(colors["TEXT_DISABLED"]))
-            pal.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(colors["TEXT_DISABLED"]))
+        # 2. 强制接管底层 QPalette (精简版)
+        pal.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
+        pal.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
+        pal.setColor(COLOR_ROLE.WindowText, QColor(colors["TEXT"]))
+        pal.setColor(COLOR_ROLE.Text, QColor(colors["TEXT"]))
+        pal.setColor(COLOR_ROLE.ButtonText, QColor(colors["TEXT"]))
+        
+        pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.WindowText, QColor(colors["TEXT_DISABLED"]))
+        pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.Text, QColor(colors["TEXT_DISABLED"]))
+        pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.ButtonText, QColor(colors["TEXT_DISABLED"]))
         self.app.setPalette(pal)
 
         # 3. 执行底层 Hack（欢迎页 + 菜单）
         patch_welcome_page(colors)
         fix_menu_edges()
+
+        # 4. 终极制裁：暴力洗脑所有 QAbstractItemView 及其 Viewport，强制图层文字高对比
+        for win in Krita.instance().windows():
+            for view in win.qwindow().findChildren(QAbstractItemView):
+                p = view.palette()
+                p.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
+                p.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
+                p.setColor(COLOR_GROUP.Active, COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
+                p.setColor(COLOR_GROUP.Inactive, COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
+                view.setPalette(p)
+                if view.viewport():
+                    view.viewport().setPalette(p)
 
 # 注册插件
 instance = Krita.instance()

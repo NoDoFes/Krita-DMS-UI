@@ -33,7 +33,6 @@ def patch_welcome_page(colors):
 
 def fix_menu_edges():
     """去除菜单原生边框和阴影，让圆角生效"""
-    # 【修复】遍历所有 Krita 窗口，而不是用不存在的 mainWindow()
     for win in Krita.instance().windows():
         qwin = win.qwindow()
         for widget in qwin.findChildren(QMenu):
