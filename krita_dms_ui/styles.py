@@ -144,11 +144,47 @@ QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover { background-colo
 QComboBox::drop-down { border: none; width: 20px; }
 QComboBox QAbstractItemView { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{SELECT_BG}}; selection-color: {{HIGHLIGHT_TEXT}} !important; color: {{TEXT}} !important; }
 
-/* ====== 滚动条 ====== */
-QScrollBar:vertical { background: transparent; width: 8px; margin: 0px; }
-QScrollBar::handle:vertical { background: {{MID_BG}}; min-height: 30px; border-radius: 4px; }
-QScrollBar::handle:vertical:hover { background: {{SELECT_BG}}; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; border: none; height: 0px; }
+/* ====== 滚动条（横向与竖向统一） ====== */
+QScrollBar:vertical { 
+    background: transparent; 
+    width: 8px; 
+    margin: 0px; 
+}
+QScrollBar::handle:vertical { 
+    background: {{MID_BG}}; 
+    min-height: 30px; 
+    border-radius: 4px; 
+}
+QScrollBar::handle:vertical:hover { 
+    background: {{SELECT_BG}}; 
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, 
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { 
+    background: none; 
+    border: none; 
+    height: 0px; 
+}
+
+QScrollBar:horizontal { 
+    background: transparent; 
+    height: 8px; 
+    margin: 0px; 
+}
+QScrollBar::handle:horizontal { 
+    background: {{MID_BG}}; 
+    min-width: 30px; 
+    border-radius: 4px; 
+}
+QScrollBar::handle:horizontal:hover { 
+    background: {{SELECT_BG}}; 
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal, 
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { 
+    background: none; 
+    border: none; 
+    width: 0px; 
+    height: 0px;
+}
 
 /* ====== 欢迎页底层兜底 ====== */
 KisWelcomePageWidget QFrame,
@@ -164,7 +200,6 @@ QListView::indicator {
     width: 14px;
     height: 14px;
     border-radius: 7px;
-    /* 强制绑定普通文字色，深色下就是纯白，浅色下就是纯黑 */
     border: 2px solid {{TEXT}} !important; 
     background-color: transparent !important;
 }
@@ -178,8 +213,7 @@ QListView::indicator:hover {
 
 QCheckBox::indicator:checked, 
 QTreeView::indicator:checked, 
-QListView::indicator:checked {
-    /* 勾选后变为实心圆，依然使用普通文字色 */
+QListWidget::indicator:checked {
     background-color: {{TEXT}} !important;
     border: 2px solid {{TEXT}} !important; 
 }
