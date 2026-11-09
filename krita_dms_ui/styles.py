@@ -150,11 +150,38 @@ QScrollBar::handle:vertical { background: {{MID_BG}}; min-height: 30px; border-r
 QScrollBar::handle:vertical:hover { background: {{SELECT_BG}}; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; border: none; height: 0px; }
 
-/* ====== 欢迎页底层兜底（彻底干掉原生大框） ====== */
+/* ====== 欢迎页底层兜底 ====== */
 KisWelcomePageWidget QFrame,
 KisWelcomePageWidget QTextBrowser {
     background-color: transparent !important;
     border: none !important;
+}
+
+/* ====== 终极修复：图层样式勾选框 ====== */
+QCheckBox::indicator, 
+QTreeView::indicator, 
+QListView::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    /* 强制绑定普通文字色，深色下就是纯白，浅色下就是纯黑 */
+    border: 2px solid {{TEXT}} !important; 
+    background-color: transparent !important;
+}
+
+QCheckBox::indicator:hover, 
+QTreeView::indicator:hover, 
+QListView::indicator:hover {
+    border: 2px solid {{TEXT}} !important;
+    background-color: transparent !important;
+}
+
+QCheckBox::indicator:checked, 
+QTreeView::indicator:checked, 
+QListView::indicator:checked {
+    /* 勾选后变为实心圆，依然使用普通文字色 */
+    background-color: {{TEXT}} !important;
+    border: 2px solid {{TEXT}} !important; 
 }
 """
 
