@@ -15,7 +15,7 @@ except ImportError:
 
 from .styles import get_theme_colors, build_qss
 from .hacks import patch_welcome_page, MenuFilter
-from .settings_ui import setup_ui_settings
+from .settings_ui import setup_ui_settings, apply_menu_text_settings  # 引入新函数
 
 class DMSModernUIExtension(Extension):
     def __init__(self, parent):
@@ -43,7 +43,6 @@ class DMSModernUIExtension(Extension):
 
     def createActions(self, window):
         self.apply_theme()
-        # 在菜单栏创建独立 UI 选项
         setup_ui_settings(window, self)
 
     def check_theme_change(self):
@@ -76,6 +75,9 @@ class DMSModernUIExtension(Extension):
         for win in Krita.instance().windows():
             qwin = win.qwindow()
             patch_welcome_page(qwin, colors)
+            
+            # 确保每次刷新 UI 时，快捷键隐藏状态都被重新应用
+            apply_menu_text_settings(qwin)
             
             for view in qwin.findChildren(QAbstractItemView):
                 p = view.palette()
