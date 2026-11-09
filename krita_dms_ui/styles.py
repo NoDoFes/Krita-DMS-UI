@@ -54,6 +54,7 @@ QMenu { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radi
 QMenu::item { background-color: transparent; padding: 6px 24px 6px 12px; border-radius: 6px; color: {{TEXT}} !important; }
 QMenu::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}} !important; }
 QMenu::item:disabled { color: {{TEXT_DISABLED}} !important; background-color: transparent !important; }
+QMenu QLabel, QMenu QCheckBox, QMenu QRadioButton { color: {{TEXT}} !important; background: transparent; }
 
 /* ====== 停靠窗口 & 标签页 ====== */
 QDockWidget { border: none; margin: 0px; titlebar-close-icon: url(none); titlebar-normal-icon: url(none); }
@@ -80,7 +81,7 @@ QTabBar::close-button:hover { background-color: rgba(255, 80, 80, 0.3); }
 QTreeView, QListView, QListWidget { background-color: {{BG}}; border: none; outline: none; show-decoration-selected: 1; }
 QTreeView::item, QListView::item, QListWidget::item { 
     border-radius: 6px; 
-    padding: 4px; 
+    padding: 8px 6px; 
     margin: 2px 0px; 
     color: {{TEXT}} !important; 
 }
@@ -88,17 +89,8 @@ QTreeView::item:hover:!selected, QListView::item:hover:!selected, QListWidget::i
 QTreeView::item:selected, QListView::item:selected, QListWidget::item:selected { background-color: {{SELECT_BG}} !important; color: {{HIGHLIGHT_TEXT}} !important; }
 
 /* ====== 特殊修补：配置窗口左侧 ====== */
-/* 给外层容器加左右留白，强行把里面的高亮框挤出来，防止贴边 */
-KisConfigView, QDialog QListView {
-    padding: 0px 6px !important;
-}
-/* 缩小内边距，让上下更加紧凑 */
-KisConfigView::item, QDialog QListView::item { 
-    border-radius: 6px !important; 
-    padding: 2px 4px !important; 
-    margin: 2px 0px !important; 
-    color: {{TEXT}} !important; 
-}
+KisConfigView, QDialog QListView { padding: 0px 6px !important; }
+KisConfigView::item, QDialog QListView::item { border-radius: 6px !important; padding: 2px 4px !important; margin: 2px 0px !important; color: {{TEXT}} !important; }
 KisConfigView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}} !important; }
 KisConfigView::item:selected { background-color: {{SELECT_BG}} !important; color: {{HIGHLIGHT_TEXT}} !important; }
 
@@ -137,29 +129,17 @@ QSpinBox QLineEdit, QDoubleSpinBox QLineEdit {
 }
 
 QSpinBox::up-button, QDoubleSpinBox::up-button {
-    subcontrol-origin: border; 
-    subcontrol-position: top right; 
-    width: 16px;
-    border-top-right-radius: 4px; 
-    background-color: rgba(128, 128, 128, 40);
-    border-left: 1px solid {{BORDER}}; 
-    margin-top: 2px; 
-    margin-right: 2px;
+    subcontrol-origin: border; subcontrol-position: top right; width: 16px;
+    border-top-right-radius: 4px; background-color: rgba(128, 128, 128, 40);
+    border-left: 1px solid {{BORDER}}; margin-top: 2px; margin-right: 2px;
 }
 QSpinBox::down-button, QDoubleSpinBox::down-button {
-    subcontrol-origin: border; 
-    subcontrol-position: bottom right; 
-    width: 16px;
-    border-bottom-right-radius: 4px; 
-    background-color: rgba(128, 128, 128, 40);
-    border-left: 1px solid {{BORDER}}; 
-    margin-bottom: 2px; 
-    margin-right: 2px;
+    subcontrol-origin: border; subcontrol-position: bottom right; width: 16px;
+    border-bottom-right-radius: 4px; background-color: rgba(128, 128, 128, 40);
+    border-left: 1px solid {{BORDER}}; margin-bottom: 2px; margin-right: 2px;
 }
 QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
-QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover { 
-    background-color: rgba(128, 128, 128, 90); 
-}
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover { background-color: rgba(128, 128, 128, 90); }
 
 QComboBox::drop-down { border: none; width: 20px; }
 QComboBox QAbstractItemView { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{SELECT_BG}}; selection-color: {{HIGHLIGHT_TEXT}} !important; color: {{TEXT}} !important; }
@@ -169,6 +149,13 @@ QScrollBar:vertical { background: transparent; width: 8px; margin: 0px; }
 QScrollBar::handle:vertical { background: {{MID_BG}}; min-height: 30px; border-radius: 4px; }
 QScrollBar::handle:vertical:hover { background: {{SELECT_BG}}; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical, QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; border: none; height: 0px; }
+
+/* ====== 欢迎页底层兜底（彻底干掉原生大框） ====== */
+KisWelcomePageWidget QFrame,
+KisWelcomePageWidget QTextBrowser {
+    background-color: transparent !important;
+    border: none !important;
+}
 """
 
 def get_theme_colors(palette, COLOR_ROLE):

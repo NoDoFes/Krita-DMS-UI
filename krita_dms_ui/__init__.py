@@ -1,13 +1,12 @@
 from krita import Krita, Extension
-
 try:
-    from PyQt6.QtWidgets import QApplication, QAbstractItemView
+    from PyQt6.QtWidgets import QApplication
     from PyQt6.QtCore import QTimer
     from PyQt6.QtGui import QPalette, QColor
     COLOR_ROLE = QPalette.ColorRole
     COLOR_GROUP = QPalette.ColorGroup
 except ImportError:
-    from PyQt5.QtWidgets import QApplication, QAbstractItemView
+    from PyQt5.QtWidgets import QApplication
     from PyQt5.QtCore import QTimer
     from PyQt5.QtGui import QPalette, QColor
     COLOR_ROLE = QPalette
@@ -15,19 +14,15 @@ except ImportError:
 
 from .styles import get_theme_colors, build_qss
 from .hacks import patch_welcome_page, MenuFilter
+# 导入显隐控制
 from .settings_ui import setup_ui_settings, apply_menu_text_settings, apply_menu_visibility_settings
 
 class DMSModernUIExtension(Extension):
     def __init__(self, parent):
         super().__init__(parent)
         self.app = QApplication.instance()
-        self.last_highlight_color = None
         self.menu_filter = None
         self._dms_menu = None
-        
-        self._debounce_timer = QTimer()
-        self._debounce_timer.setSingleShot(True)
-        self._debounce_timer.timeout.connect(self.apply_theme)
 
     def setup(self): pass
 
@@ -36,35 +31,25 @@ class DMSModernUIExtension(Extension):
             self.menu_filter = MenuFilter(self.app)
             self.app.installEventFilter(self.menu_filter)
 
-        self.apply_base_style()
-        QTimer.singleShot(100, self.apply_theme)
+        # 启动时：只做一次全局 QSS 注入（极快，200ms以内）
+        self.apply_global_theme()
         
-        notifier = Krita.instance().notifier()
-        notifier.windowCreated.connect(self.trigger_theme_update)
+        # 把处理欢迎页、菜单文本等脏活累活，延迟 1 秒放到后台做
+        QTimer.singleShot(1000, self.apply_heavy_hacks)
         
-        self.theme_watcher = QTimer()
-        self.theme_watcher.timeout.connect(self.check_theme_change)
-        self.theme_watcher.start(2000)
+        # 【核心修复】监听窗口创建，确保新开窗口时状态不丢失
+        Krita.instance().notifier().windowCreated.connect(self.apply_heavy_hacks)
 
     def createActions(self, window):
-        self.trigger_theme_update()
+        # 只在这里挂载 DMS UI 菜单，不触发全局重绘
         setup_ui_settings(window, self)
 
-    def check_theme_change(self):
-        pal = self.app.palette()
-        current_hl = pal.color(COLOR_ROLE.Highlight).name()
-        if self.last_highlight_color != current_hl:
-            self.trigger_theme_update()
-
-    def trigger_theme_update(self):
-        self._debounce_timer.start(150)
-
-    def apply_base_style(self):
+    def apply_global_theme(self):
+        """核心：只调一次 setStyleSheet，瞬间生效"""
         if not self.app: return
         pal = self.app.palette()
-        self.last_highlight_color = pal.color(COLOR_ROLE.Highlight).name()
-        
         colors = get_theme_colors(pal, COLOR_ROLE)
+        
         self.app.setStyleSheet(build_qss(colors))
 
         pal.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
@@ -78,38 +63,23 @@ class DMSModernUIExtension(Extension):
         pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.ButtonText, QColor(colors["TEXT_DISABLED"]))
         self.app.setPalette(pal)
 
-    def apply_theme(self):
+    def apply_heavy_hacks(self):
+        """耗时操作：放在后台，带防重复检查"""
         if not self.app: return
-        
-        self.apply_base_style()
         pal = self.app.palette()
         colors = get_theme_colors(pal, COLOR_ROLE)
 
         for win in Krita.instance().windows():
             qwin = win.qwindow()
-            
+            # 1. 处理欢迎页
             patch_welcome_page(qwin, colors)
             
-            # 【核心修复】每次刷新时，强制应用菜单文本和显隐状态，防止被 Krita 内部重置
+            # 2. 处理菜单文本
             apply_menu_text_settings(qwin)
-            apply_menu_visibility_settings(qwin)
             
-            for view in qwin.findChildren(QAbstractItemView):
-                if view.property("dms_colored") == colors["SELECT_BG"]:
-                    continue
-                view.setProperty("dms_colored", colors["SELECT_BG"])
-                
-                p = view.palette()
-                p.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
-                p.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
-                p.setColor(COLOR_GROUP.Active, COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
-                p.setColor(COLOR_GROUP.Inactive, COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
-                view.setPalette(p)
-                if view.viewport():
-                    view.viewport().setPalette(p)
-                view.setStyleSheet(f"QAbstractItemView {{ selection-color: {colors['HIGHLIGHT_TEXT']} !important; }} QTreeView::item:selected {{ color: {colors['HIGHLIGHT_TEXT']} !important; }}")
+            # 3. 【核心修复】强制把菜单显隐状态按回去！
+            apply_menu_visibility_settings(qwin)
 
-# 注册插件
 instance = Krita.instance()
 extension = DMSModernUIExtension(instance)
 instance.addExtension(extension)

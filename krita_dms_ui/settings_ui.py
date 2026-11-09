@@ -5,14 +5,28 @@ try:
 except ImportError:
     from PyQt5.QtWidgets import QMenu
 
+# 内部中文名 -> 英文名（Krita 英文界面下回退匹配用）
+_MENU_EN = {
+    "文件": "File", "编辑": "Edit", "视图": "View", "图像": "Image",
+    "图层": "Layer", "选择": "Select", "滤镜": "Filter", "工具": "Tools",
+    "设置": "Settings", "窗口": "Window", "帮助": "Help",
+}
+
+def _clean_menu_text(text):
+    """去掉 & 与末尾 (快捷键) 提示"""
+    raw = text.replace("&", "")
+    return re.sub(r'\s*[\(（][^\)）]*[\)）]$', '', raw).strip()
+
+def _matches_menu(action_text, menu_name):
+    """中文名优先，英文名回退，兼容 Krita 英文界面"""
+    clean = _clean_menu_text(action_text)
+    return clean == menu_name or clean == _MENU_EN.get(menu_name, "")
+
 def toggle_top_menu(qwin, menu_name, visible):
     """控制顶部菜单项的显示与隐藏"""
     menubar = qwin.menuBar()
     for action in menubar.actions():
-        raw_text = action.text().replace("&", "")
-        clean_text = re.sub(r'\s*[\(（][^\)）]*[\)）]$', '', raw_text).strip()
-        
-        if clean_text == menu_name:
+        if _matches_menu(action.text(), menu_name):
             action.setVisible(visible)
             break
 
@@ -38,8 +52,7 @@ def apply_menu_text_settings(qwin):
                 action.setProperty("dms_original_text", text)
             
             orig = action.property("dms_original_text")
-            clean = orig.replace("&", "")
-            clean = re.sub(r'\s*[\(（][^\)）]*[\)）]$', '', clean).strip()
+            clean = _clean_menu_text(orig)
             
             if action.text() != clean:
                 action.setText(clean)
@@ -89,10 +102,16 @@ def setup_ui_settings(window, extension):
     action_hide_shortcuts.toggled.connect(on_shortcuts_toggled)
     extension._dms_menu.addAction(action_hide_shortcuts)
     
+    extension._dms_menu.addSeparator()
+    action_refresh = window.createAction("dms_refresh_theme", "🔄 重载当前主题色", "")
+    action_refresh.triggered.connect(extension.apply_global_theme) 
+    extension._dms_menu.addAction(action_refresh)
+    
     # 初次加载时应用一次
     apply_menu_text_settings(qwin)
     apply_menu_visibility_settings(qwin)
 
 def on_menu_toggled(qwin, menu_name, checked):
+    """当用户勾选/取消时触发"""
     toggle_top_menu(qwin, menu_name, checked)
     Krita.instance().writeSetting("DMS_UI", f"show_{menu_name}", str(checked).lower())
