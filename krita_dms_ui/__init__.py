@@ -14,35 +14,54 @@ except ImportError:
     COLOR_GROUP = QPalette
 
 from .styles import get_theme_colors, build_qss
-from .hacks import patch_welcome_page, fix_menu_edges
+from .hacks import patch_welcome_page, MenuFilter
+from .settings_ui import setup_ui_settings
 
 class DMSModernUIExtension(Extension):
     def __init__(self, parent):
         super().__init__(parent)
         self.app = QApplication.instance()
+        self.last_highlight_color = None
+        self.menu_filter = None
+        self._dms_menu = None
 
     def setup(self): pass
-    def createActions(self, window): pass
 
     def start(self):
-        QTimer.singleShot(1000, self.apply_theme)
-        notifier = Krita.instance().notifier()
-        notifier.windowCreated.connect(self.reapply_theme)
+        if not self.menu_filter:
+            self.menu_filter = MenuFilter(self.app)
+            self.app.installEventFilter(self.menu_filter)
 
-    def reapply_theme(self):
-        QTimer.singleShot(200, self.apply_theme)
-        QTimer.singleShot(800, self.apply_theme)
-        QTimer.singleShot(1500, self.apply_theme)
+        self.apply_theme()
+        
+        notifier = Krita.instance().notifier()
+        notifier.windowCreated.connect(self.apply_theme)
+        
+        self.theme_watcher = QTimer()
+        self.theme_watcher.timeout.connect(self.check_theme_change)
+        self.theme_watcher.start(2000)
+
+    def createActions(self, window):
+        self.apply_theme()
+        # 在菜单栏创建独立 UI 选项
+        setup_ui_settings(window, self)
+
+    def check_theme_change(self):
+        pal = self.app.palette()
+        current_hl = pal.color(COLOR_ROLE.Highlight).name()
+        if self.last_highlight_color != current_hl:
+            self.apply_theme()
 
     def apply_theme(self):
         if not self.app: return
         
         pal = self.app.palette()
+        self.last_highlight_color = pal.color(COLOR_ROLE.Highlight).name()
         
         colors = get_theme_colors(pal, COLOR_ROLE)
+        
         self.app.setStyleSheet(build_qss(colors))
 
-        # 强制接管全局 Palette
         pal.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
         pal.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
         pal.setColor(COLOR_ROLE.WindowText, QColor(colors["TEXT"]))
@@ -54,12 +73,11 @@ class DMSModernUIExtension(Extension):
         pal.setColor(COLOR_GROUP.Disabled, COLOR_ROLE.ButtonText, QColor(colors["TEXT_DISABLED"]))
         self.app.setPalette(pal)
 
-        patch_welcome_page(colors)
-        fix_menu_edges()
-
-        # 针对图层、通道等 C++ 自绘列表，直接洗脑它们的内部调色板
         for win in Krita.instance().windows():
-            for view in win.qwindow().findChildren(QAbstractItemView):
+            qwin = win.qwindow()
+            patch_welcome_page(qwin, colors)
+            
+            for view in qwin.findChildren(QAbstractItemView):
                 p = view.palette()
                 p.setColor(COLOR_ROLE.Highlight, QColor(colors["SELECT_BG"]))
                 p.setColor(COLOR_ROLE.HighlightedText, QColor(colors["HIGHLIGHT_TEXT"]))
@@ -68,6 +86,7 @@ class DMSModernUIExtension(Extension):
                 view.setPalette(p)
                 if view.viewport():
                     view.viewport().setPalette(p)
+                view.setStyleSheet(f"QAbstractItemView {{ selection-color: {colors['HIGHLIGHT_TEXT']} !important; }} QTreeView::item:selected {{ color: {colors['HIGHLIGHT_TEXT']} !important; }}")
 
 # 注册插件
 instance = Krita.instance()
