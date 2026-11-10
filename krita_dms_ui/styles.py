@@ -13,10 +13,10 @@ QMenuBar::item {
     padding: 6px 14px; 
     margin: 2px 4px;   
     border-radius: 6px; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
 }
-QMenuBar::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}} !important; }
-QMenuBar::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}} !important; }
+QMenuBar::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
+QMenuBar::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
 
 QMainWindow::separator { background-color: {{BG}}; width: 0px; height: 0px; }
 QSplitter::handle { background-color: {{BG}}; }
@@ -39,22 +39,22 @@ QToolBar QToolButton {
     border-radius: 6px; 
     padding: 4px; 
     margin: 2px;
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
 }
 QToolBar QToolButton:hover { 
     background-color: {{HOVER_BG}}; 
 }
 QToolBar QToolButton:pressed, QToolBar QToolButton:checked { 
     background-color: {{SELECT_BG}}; 
-    color: {{HIGHLIGHT_TEXT}} !important; 
+    color: {{HIGHLIGHT_TEXT}}; 
 }
 
 /* ====== 弹出菜单 ====== */
 QMenu { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radius: 8px; padding: 6px; outline: none; }
-QMenu::item { background-color: transparent; padding: 6px 24px 6px 12px; border-radius: 6px; color: {{TEXT}} !important; }
-QMenu::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}} !important; }
-QMenu::item:disabled { color: {{TEXT_DISABLED}} !important; background-color: transparent !important; }
-QMenu QLabel, QMenu QCheckBox, QMenu QRadioButton { color: {{TEXT}} !important; background: transparent; }
+QMenu::item { background-color: transparent; padding: 6px 24px 6px 12px; border-radius: 6px; color: {{TEXT}}; }
+QMenu::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
+QMenu::item:disabled { color: {{TEXT_DISABLED}}; background-color: transparent; }
+QMenu QLabel, QMenu QCheckBox, QMenu QRadioButton { color: {{TEXT}}; background: transparent; }
 
 /* ====== 停靠窗口 & 标签页 ====== */
 QDockWidget { border: none; margin: 0px; titlebar-close-icon: url(none); titlebar-normal-icon: url(none); }
@@ -69,10 +69,10 @@ QTabBar::tab {
     background: transparent; border: none; padding: 6px 20px; margin: 4px 4px 0px 4px; 
     border-top-left-radius: 6px; border-top-right-radius: 6px;
     border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
 }
-QTabBar::tab:hover:!selected { background-color: {{HOVER_BG}}; border-bottom: 1px solid {{HOVER_BG}}; color: {{TEXT}} !important; }
-QTabBar::tab:selected { background-color: {{SELECT_BG}}; border-bottom: 1px solid {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}} !important; }
+QTabBar::tab:hover:!selected { background-color: {{HOVER_BG}}; border-bottom: 1px solid {{HOVER_BG}}; color: {{TEXT}}; }
+QTabBar::tab:selected { background-color: {{SELECT_BG}}; border-bottom: 1px solid {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
 
 QTabBar::close-button { subcontrol-origin: padding; subcontrol-position: center right; margin-right: 6px; width: 16px; height: 16px; border-radius: 8px; background: transparent; }
 QTabBar::close-button:hover { background-color: rgba(255, 80, 80, 0.3); }
@@ -83,22 +83,22 @@ QTreeView::item, QListView::item, QListWidget::item {
     border-radius: 6px; 
     padding: 8px 6px; 
     margin: 2px 0px; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
 }
-QTreeView::item:hover:!selected, QListView::item:hover:!selected, QListWidget::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}} !important; }
-QTreeView::item:selected, QListView::item:selected, QListWidget::item:selected { background-color: {{SELECT_BG}} !important; color: {{HIGHLIGHT_TEXT}} !important; }
+QTreeView::item:hover:!selected, QListView::item:hover:!selected, QListWidget::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
+QTreeView::item:selected, QListView::item:selected, QListWidget::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
 
 /* ====== 特殊修补：配置窗口左侧 ====== */
-KisConfigView, QDialog QListView { padding: 0px 6px !important; }
-KisConfigView::item, QDialog QListView::item { border-radius: 6px !important; padding: 2px 4px !important; margin: 2px 0px !important; color: {{TEXT}} !important; }
-KisConfigView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}} !important; }
-KisConfigView::item:selected { background-color: {{SELECT_BG}} !important; color: {{HIGHLIGHT_TEXT}} !important; }
+KisConfigView, QDialog QListView { padding: 0px 6px; }
+KisConfigView::item, QDialog QListView::item { border-radius: 6px; padding: 2px 4px; margin: 2px 0px; color: {{TEXT}}; }
+KisConfigView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
+KisConfigView::item:selected { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
 
 /* ====== 按钮 ====== */
-QPushButton { background-color: {{BASE_BG}}; border: none; border-radius: 6px; padding: 5px 12px; color: {{TEXT}} !important; }
+QPushButton { background-color: {{BASE_BG}}; border: none; border-radius: 6px; padding: 5px 12px; color: {{TEXT}}; }
 QPushButton:hover { background-color: {{HOVER_BG}}; }
-QPushButton:pressed { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}} !important; }
-QPushButton:disabled { color: {{TEXT_DISABLED}} !important; background-color: {{BG}} !important; }
+QPushButton:pressed { background-color: {{SELECT_BG}}; color: {{HIGHLIGHT_TEXT}}; }
+QPushButton:disabled { color: {{TEXT_DISABLED}}; background-color: {{BG}}; }
 
 /* ====== 输入框 & 下拉框 ====== */
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, KisDoubleSliderSpinBox, KisSliderSpinBox { 
@@ -106,7 +106,7 @@ QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, KisDoubleSliderSpinBox, KisSlide
     border: 1px solid transparent; 
     border-radius: 6px; 
     padding: 4px 8px; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
     selection-background-color: {{SELECT_BG}};
     selection-color: {{HIGHLIGHT_TEXT}};
 }
@@ -114,17 +114,17 @@ QSpinBox, QDoubleSpinBox { padding-right: 20px; }
 
 QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover, KisDoubleSliderSpinBox:hover, KisSliderSpinBox:hover { 
     background-color: {{HOVER_BG}}; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
 }
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, KisDoubleSliderSpinBox:focus, KisSliderSpinBox:focus { 
     background-color: {{ITEM_BG}}; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
     border: 1px solid {{SELECT_BG}}; 
 }
 
 QSpinBox QLineEdit, QDoubleSpinBox QLineEdit { 
     background: transparent; 
-    color: {{TEXT}} !important; 
+    color: {{TEXT}}; 
     selection-background-color: {{SELECT_BG}}; selection-color: {{HIGHLIGHT_TEXT}};
 }
 
@@ -142,7 +142,7 @@ QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
 QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover { background-color: rgba(128, 128, 128, 90); }
 
 QComboBox::drop-down { border: none; width: 20px; }
-QComboBox QAbstractItemView { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{SELECT_BG}}; selection-color: {{HIGHLIGHT_TEXT}} !important; color: {{TEXT}} !important; }
+QComboBox QAbstractItemView { background-color: {{BASE_BG}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{SELECT_BG}}; selection-color: {{HIGHLIGHT_TEXT}}; color: {{TEXT}}; }
 
 /* ====== 滚动条（横向与竖向统一） ====== */
 QScrollBar:vertical { 
@@ -189,8 +189,8 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
 /* ====== 欢迎页底层兜底 ====== */
 KisWelcomePageWidget QFrame,
 KisWelcomePageWidget QTextBrowser {
-    background-color: transparent !important;
-    border: none !important;
+    background-color: transparent;
+    border: none;
 }
 
 /* ====== 终极修复：图层样式勾选框 ====== */
@@ -200,22 +200,22 @@ QListView::indicator {
     width: 14px;
     height: 14px;
     border-radius: 7px;
-    border: 2px solid {{TEXT}} !important; 
-    background-color: transparent !important;
+    border: 2px solid {{TEXT}}; 
+    background-color: transparent;
 }
 
 QCheckBox::indicator:hover, 
 QTreeView::indicator:hover, 
 QListView::indicator:hover {
-    border: 2px solid {{TEXT}} !important;
-    background-color: transparent !important;
+    border: 2px solid {{TEXT}};
+    background-color: transparent;
 }
 
 QCheckBox::indicator:checked, 
 QTreeView::indicator:checked, 
-QListWidget::indicator:checked {
-    background-color: {{TEXT}} !important;
-    border: 2px solid {{TEXT}} !important; 
+QListView::indicator:checked {
+    background-color: {{TEXT}};
+    border: 2px solid {{TEXT}}; 
 }
 """
 

@@ -26,11 +26,11 @@ def patch_welcome_page(qwin, colors):
             QWidget {{ 
                 background-color: {colors['ITEM_BG']}; 
                 border-radius: 6px; 
-                color: {colors['TEXT']} !important; 
+                color: {colors['TEXT']}; 
                 padding: 8px 12px;
             }}
             QWidget:hover {{ background-color: {colors['HOVER_BG']}; }}
-            QWidget:pressed {{ background-color: {colors['SELECT_BG']}; color: {colors['HIGHLIGHT_TEXT']} !important; }}
+            QWidget:pressed {{ background-color: {colors['SELECT_BG']}; color: {colors['HIGHLIGHT_TEXT']}; }}
         """
         for btn in [new_file_btn, open_file_btn]:
             if btn:
@@ -45,14 +45,14 @@ def patch_welcome_page(qwin, colors):
                     clean_text = re.sub(r'\s*[\(（][^\)）]*[\)）]$', '', text).strip()
                     if text != clean_text:
                         lbl.setText(clean_text)
-                    lbl.setStyleSheet(f"text-decoration: none !important; color: {colors['TEXT']} !important; background: transparent;")
+                    lbl.setStyleSheet(f"text-decoration: none; color: {colors['TEXT']}; background: transparent;")
 
     if recent_list:
         recent_list.setStyleSheet(f"""
             QListWidget {{ background: transparent; border: none; }}
-            QListWidget::item {{ color: {colors['TEXT']} !important; border-radius: 6px; padding: 2px; }}
+            QListWidget::item {{ color: {colors['TEXT']}; border-radius: 6px; padding: 2px; }}
             QListWidget::item:hover {{ background-color: {colors['HOVER_BG']}; }}
-            QListWidget::item:selected {{ background-color: {colors['SELECT_BG']}; color: {colors['HIGHLIGHT_TEXT']} !important; }}
+            QListWidget::item:selected {{ background-color: {colors['SELECT_BG']}; color: {colors['HIGHLIGHT_TEXT']}; }}
         """)
 
     keywords = ["使用手册", "捐款支持", "KDE 社区", "源代码库", "新手入门", "用户社区", "官方网站"]
@@ -85,7 +85,7 @@ def patch_welcome_page(qwin, colors):
                         border-radius: 6px;
                         padding: 6px 12px;
                         margin: 2px 0px;
-                        color: {colors['TEXT']} !important;
+                        color: {colors['TEXT']};
                     }}
                     QLabel:hover {{
                         background-color: {colors['HOVER_BG']};
@@ -113,8 +113,8 @@ def patch_welcome_page(qwin, colors):
                             }}
                             QLabel {{
                                 background: transparent;
-                                color: {colors['TEXT']} !important;
-                                text-decoration: none !important;
+                                color: {colors['TEXT']};
+                                text-decoration: none;
                             }}
                         """)
                         break
@@ -146,5 +146,5 @@ class MenuFilter(QObject):
                             w = action.defaultWidget()
                             for child in w.findChildren(QWidget):
                                 if isinstance(child, (QLabel, QCheckBox, QRadioButton)):
-                                    child.setStyleSheet(f"color: {text_color} !important; background: transparent;")
+                                    child.setStyleSheet(f"color: {text_color}; background: transparent;")
         return False
