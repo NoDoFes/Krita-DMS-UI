@@ -124,7 +124,17 @@ class DMSModernUIExtension(Extension):
 
         # 先装好自绘指示器，再上 QSS：QSS 一变就会触发全局 repolish
         ensure_indicator_style(colors, self.app)
-        self.app.setStyleSheet(build_qss(colors, prepare_icons(colors)))
+        qss = build_qss(colors, prepare_icons(colors))
+
+        # 只有样式表真的变了才写入。
+        # Krita 在配置对话框点「确定」后会用同一个 .colors 重放调色板，
+        # 触发 refresh_theme；而 Qt 的 QApplication::setStyleSheet()
+        # 会无条件对 styleRulesCache 里的所有控件做一次 repolish，
+        # 此时对话框控件刚销毁、菜单刚重建，缓存里可能留下悬空指针，
+        # 导致段错误。内容相同就跳过，既避免崩溃也少一次全量 repolish。
+        if self.app.styleSheet() != qss:
+            self.app.setStyleSheet(qss)
+
         self.sync_palette(colors)
 
     def sync_palette(self, colors):

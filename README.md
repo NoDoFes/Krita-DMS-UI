@@ -133,7 +133,7 @@ python3 update_context.py
 - **已验证环境**：Krita 6.x（Qt6 / PyQt6，Linux）。代码保留了 PyQt5 兼容分支，但主要在 Krita 6 上开发验证，Krita 5.x 尚未充分测试。
 - **不要和其他 UI 插件同时启用**：例如 krita-morandiUI、Style Sheet Loader 等。全局 QSS 会互相覆盖，容易出现样式错乱。
 - **部分控件不受 QSS 控制**：Krita 有不少 C++ 自绘控件（画布周边、部分色彩选择器等），需要针对 `objectName` 单独打补丁。
-- **切换主题后自动刷新**：matugen 在运行中重新注入 `QPalette` 时会自动重载 QSS、选中态和欢迎页；也可以手动点 **DMS UI → 🔄 重载当前主题色**。插件记录的调色板签名包含 `Highlight` / `HighlightedText`，因此 Krita 用同一个 `.colors` 重放主题（例如打开画布后）也能被识别并自动修复。
+- **切换主题后自动刷新**：matugen 在运行中重新注入 `QPalette` 时会自动重载 QSS、选中态和欢迎页；也可以手动点 **DMS UI → 🔄 重载当前主题色**。插件记录的调色板签名包含 `Highlight` / `HighlightedText`，因此 Krita 用同一个 `.colors` 重放主题（例如打开画布后）也能被识别并自动修复。只有当新生成的 QSS 与当前不同才调用 `QApplication.setStyleSheet()`：同一套颜色重放时直接跳过，避免 Qt 对全部控件做一次无意义的全量 repolish（否则在配置对话框刚关闭、菜单刚重建时可能踩到悬空指针而闪退）。
 - **部分控件只认调色板**：KDE 的 `KPageListViewDelegate`（配置对话框左侧栏）等自绘 delegate 不读 QSS 的 `color`，所以选中态的 `Highlight` / `HighlightedText` 由插件同步写入 `QPalette`，与 QSS 的 `primary-container` 保持一致。`KPageDialog` 在显示时还会显式套用当前应用调色板，并单独校正侧栏 `KPageListView`，避免从画布窗口继承到 matugen 的深色选中文字。
 - **勾选控件是 M3 自绘**：QSS 画不出勾号和圆点，所以 `hacks.py` 里用 `QProxyStyle`（`IndicatorStyle`）绘制——checkbox 是圆角方形，选中为 `primary` 填充 + `on-primary` 勾号，不确定态画横杠；radio 是圆环 + 圆点，选中用 `primary`；`QTreeView` / `QListView` 的勾选复用同一套画法，尺寸小一号。颜色取自 `styles.get_indicator_colors()`，跟随主题切换，不引入 SVG / PNG。注意：Krita 的「样式」菜单会调用 `QApplication.setStyle()` 换掉代理样式，插件会在刷新 / 新窗口时自动重新包裹。
 - **SpinBox 上下箭头来自 SVG 素材库**：`assets/icons/` 的模板由 `icons.py` 按当前主题色渲染到用户缓存目录，QSS 用 `image: url(...)` 引用，浅色 / 深色与禁用态都跟随调色板，不引入 PNG。**ComboBox 下拉箭头暂未绘制**，后续复用同一套素材补齐。
