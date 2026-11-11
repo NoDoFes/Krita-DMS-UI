@@ -177,6 +177,26 @@ QSpinBox::down-button, QDoubleSpinBox::down-button {
 QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
 QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover { background-color: {{HOVER_BG}}; }
 
+/* 上下箭头：SVG 由 icons.py 按主题色渲染，这里只负责尺寸与位置 */
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: {{SPIN_UP_ICON}};
+    width: 9px;
+    height: 9px;
+    subcontrol-origin: border;
+    subcontrol-position: center;
+}
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: {{SPIN_DOWN_ICON}};
+    width: 9px;
+    height: 9px;
+    subcontrol-origin: border;
+    subcontrol-position: center;
+}
+QSpinBox::up-arrow:disabled, QDoubleSpinBox::up-arrow:disabled,
+QSpinBox::up-arrow:off, QDoubleSpinBox::up-arrow:off { image: {{SPIN_UP_DISABLED_ICON}}; }
+QSpinBox::down-arrow:disabled, QDoubleSpinBox::down-arrow:disabled,
+QSpinBox::down-arrow:off, QDoubleSpinBox::down-arrow:off { image: {{SPIN_DOWN_DISABLED_ICON}}; }
+
 QComboBox::drop-down { border: none; width: 20px; }
 QComboBox QAbstractItemView { background-color: {{SURFACE_CONTAINER_HIGH}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{PRIMARY_CONTAINER}}; selection-color: {{ON_PRIMARY_CONTAINER}}; color: {{TEXT}}; }
 
@@ -407,13 +427,17 @@ def get_indicator_colors(colors):
 _TOKEN_RE = re.compile(r"\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}")
 
 
-def build_qss(colors):
+def build_qss(colors, icons=None):
     """单次遍历替换 token。
 
     比链式 ``str.replace`` 少扫描 9 遍模板；拼错的 token 会直接 KeyError，
     不会把 ``{{XXX}}`` 静默漏进样式表。
+
+    ``icons`` 由 ``icons.prepare_icons()`` 提供（``SPIN_UP_ICON`` 等），
+    与语义色一起参与替换。
     """
-    return _TOKEN_RE.sub(lambda match: colors[match.group(1)], MODERN_QSS)
+    tokens = {**colors, **icons} if icons else colors
+    return _TOKEN_RE.sub(lambda match: tokens[match.group(1)], MODERN_QSS)
 
 
 __all__ = [

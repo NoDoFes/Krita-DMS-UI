@@ -9,7 +9,7 @@ BUNDLE_DIR = ROOT_DIR / "ai_context_bundle"
 INDEX_FILE_NAME = "_00_CONTEXT_INDEX.md"
 
 # 需要处理的开发文件后缀 (按需增减)
-ALLOWED_EXTENSIONS = {'.py', '.qss', '.desktop', '.md', '.toml', '.json', '.txt', '.xml', '.ui', '.sh'}
+ALLOWED_EXTENSIONS = {'.py', '.qss', '.desktop', '.md', '.toml', '.json', '.txt', '.xml', '.ui', '.sh', '.svg'}
 
 # 排除的目录 (不扫描)
 EXCLUDE_DIRS = {'.git', '__pycache__', '.idea', '.vscode', 'ai_context_bundle', 'venv', '.env'}

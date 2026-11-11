@@ -15,10 +15,20 @@ try:
         QPointF,
         QPropertyAnimation,
         QRectF,
+        QSize,
+        QStandardPaths,
         QTimer,
+        QUrl,
         Qt,
     )
-    from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
+    from PyQt6.QtGui import (
+        QColor,
+        QDesktopServices,
+        QPainter,
+        QPainterPath,
+        QPalette,
+        QPen,
+    )
     from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -31,7 +41,9 @@ try:
         QMenuBar,
         QProxyStyle,
         QRadioButton,
+        QSizePolicy,
         QStyle,
+        QToolButton,
         QWidget,
     )
 
@@ -44,10 +56,20 @@ except ImportError:
         QPointF,
         QPropertyAnimation,
         QRectF,
+        QSize,
+        QStandardPaths,
         QTimer,
+        QUrl,
         Qt,
     )
-    from PyQt5.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
+    from PyQt5.QtGui import (
+        QColor,
+        QDesktopServices,
+        QPainter,
+        QPainterPath,
+        QPalette,
+        QPen,
+    )
     from PyQt5.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -60,7 +82,9 @@ except ImportError:
         QMenuBar,
         QProxyStyle,
         QRadioButton,
+        QSizePolicy,
         QStyle,
+        QToolButton,
         QWidget,
     )
 
@@ -72,6 +96,7 @@ except ImportError:
 # PyQt5 直接挂在类上（QPalette.Highlight）。
 COLOR_ROLE = QPalette.ColorRole if IS_QT6 else QPalette
 COLOR_GROUP = QPalette.ColorGroup if IS_QT6 else QPalette
+STANDARD_PATH = QStandardPaths.StandardLocation if IS_QT6 else QStandardPaths
 
 POLISH_EVENT = QEvent.Type.Polish if IS_QT6 else QEvent.Polish
 SHOW_EVENT = QEvent.Type.Show if IS_QT6 else QEvent.Show
@@ -105,6 +130,17 @@ NO_PEN = Qt.PenStyle.NoPen if IS_QT6 else Qt.NoPen
 NO_BRUSH = Qt.BrushStyle.NoBrush if IS_QT6 else Qt.NoBrush
 ROUND_CAP = Qt.PenCapStyle.RoundCap if IS_QT6 else Qt.RoundCap
 ROUND_JOIN = Qt.PenJoinStyle.RoundJoin if IS_QT6 else Qt.RoundJoin
+
+POINTING_HAND = (
+    Qt.CursorShape.PointingHandCursor if IS_QT6 else Qt.PointingHandCursor
+)
+STRONG_FOCUS = Qt.FocusPolicy.StrongFocus if IS_QT6 else Qt.StrongFocus
+TEXT_BESIDE_ICON = (
+    Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+    if IS_QT6
+    else Qt.ToolButtonTextBesideIcon
+)
+SIZE_POLICY = QSizePolicy.Policy if IS_QT6 else QSizePolicy
 
 # ---- sip：判断 C++ 对象是否已被 Qt 销毁（样式被 Krita 换掉时用） ----
 try:

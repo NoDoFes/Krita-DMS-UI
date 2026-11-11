@@ -12,6 +12,7 @@
 from krita import Krita, Extension
 
 from .qt_compat import COLOR_GROUP, COLOR_ROLE, QApplication, QColor, QTimer
+from .icons import prepare_icons
 from .styles import build_qss, get_theme_colors
 from .hacks import (
     MenuFilter,
@@ -122,7 +123,7 @@ class DMSModernUIExtension(Extension):
 
         # 先装好自绘指示器，再上 QSS：QSS 一变就会触发全局 repolish
         ensure_indicator_style(colors, self.app)
-        self.app.setStyleSheet(build_qss(colors))
+        self.app.setStyleSheet(build_qss(colors, prepare_icons(colors)))
         self.sync_palette(colors)
 
     def sync_palette(self, colors):
