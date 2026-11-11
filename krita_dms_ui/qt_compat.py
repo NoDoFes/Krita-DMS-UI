@@ -29,7 +29,6 @@ try:
         QPainterPath,
         QPalette,
         QPen,
-        QPixmap,
     )
     from PyQt6.QtWidgets import (
         QApplication,
@@ -40,7 +39,6 @@ try:
         QLabel,
         QListView,
         QListWidget,
-        QMainWindow,
         QMenu,
         QMenuBar,
         QProxyStyle,
@@ -74,7 +72,6 @@ except ImportError:
         QPainterPath,
         QPalette,
         QPen,
-        QPixmap,
     )
     from PyQt5.QtWidgets import (
         QApplication,
@@ -85,7 +82,6 @@ except ImportError:
         QLabel,
         QListView,
         QListWidget,
-        QMainWindow,
         QMenu,
         QMenuBar,
         QProxyStyle,
@@ -118,16 +114,6 @@ WA_TRANSLUCENT_BACKGROUND = (
     if IS_QT6
     else Qt.WA_TranslucentBackground
 )
-WA_NO_SYSTEM_BACKGROUND = (
-    Qt.WidgetAttribute.WA_NoSystemBackground
-    if IS_QT6
-    else Qt.WA_NoSystemBackground
-)
-WA_TRANSPARENT_FOR_MOUSE = (
-    Qt.WidgetAttribute.WA_TransparentForMouseEvents
-    if IS_QT6
-    else Qt.WA_TransparentForMouseEvents
-)
 
 FRAMELESS_WINDOW_HINT = (
     Qt.WindowType.FramelessWindowHint if IS_QT6 else Qt.FramelessWindowHint
@@ -147,11 +133,6 @@ PRIMITIVE_ELEMENT = QStyle.PrimitiveElement if IS_QT6 else QStyle
 STATE_FLAG = QStyle.StateFlag if IS_QT6 else QStyle
 
 ANTIALIASING = QPainter.RenderHint.Antialiasing if IS_QT6 else QPainter.Antialiasing
-SMOOTH_PIXMAP = (
-    QPainter.RenderHint.SmoothPixmapTransform
-    if IS_QT6
-    else QPainter.SmoothPixmapTransform
-)
 NO_PEN = Qt.PenStyle.NoPen if IS_QT6 else Qt.NoPen
 NO_BRUSH = Qt.BrushStyle.NoBrush if IS_QT6 else Qt.NoBrush
 ROUND_CAP = Qt.PenCapStyle.RoundCap if IS_QT6 else Qt.RoundCap
@@ -161,7 +142,6 @@ POINTING_HAND = (
     Qt.CursorShape.PointingHandCursor if IS_QT6 else Qt.PointingHandCursor
 )
 STRONG_FOCUS = Qt.FocusPolicy.StrongFocus if IS_QT6 else Qt.StrongFocus
-NO_FOCUS = Qt.FocusPolicy.NoFocus if IS_QT6 else Qt.NoFocus
 TEXT_BESIDE_ICON = (
     Qt.ToolButtonStyle.ToolButtonTextBesideIcon
     if IS_QT6
