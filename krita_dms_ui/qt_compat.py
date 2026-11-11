@@ -13,8 +13,10 @@ try:
         QEvent,
         QFileSystemWatcher,
         QObject,
+        QPoint,
         QPointF,
         QPropertyAnimation,
+        QRect,
         QRectF,
         QSize,
         QStandardPaths,
@@ -56,8 +58,10 @@ except ImportError:
         QEvent,
         QFileSystemWatcher,
         QObject,
+        QPoint,
         QPointF,
         QPropertyAnimation,
+        QRect,
         QRectF,
         QSize,
         QStandardPaths,
@@ -104,6 +108,7 @@ STANDARD_PATH = QStandardPaths.StandardLocation if IS_QT6 else QStandardPaths
 
 POLISH_EVENT = QEvent.Type.Polish if IS_QT6 else QEvent.Polish
 SHOW_EVENT = QEvent.Type.Show if IS_QT6 else QEvent.Show
+HIDE_EVENT = QEvent.Type.Hide if IS_QT6 else QEvent.Hide
 
 WA_HOVER = Qt.WidgetAttribute.WA_Hover if IS_QT6 else Qt.WA_Hover
 WA_STYLED_BACKGROUND = (
@@ -113,6 +118,16 @@ WA_TRANSLUCENT_BACKGROUND = (
     Qt.WidgetAttribute.WA_TranslucentBackground
     if IS_QT6
     else Qt.WA_TranslucentBackground
+)
+WA_NO_SYSTEM_BACKGROUND = (
+    Qt.WidgetAttribute.WA_NoSystemBackground
+    if IS_QT6
+    else Qt.WA_NoSystemBackground
+)
+WA_TRANSPARENT_FOR_MOUSE = (
+    Qt.WidgetAttribute.WA_TransparentForMouseEvents
+    if IS_QT6
+    else Qt.WA_TransparentForMouseEvents
 )
 
 FRAMELESS_WINDOW_HINT = (
@@ -126,6 +141,7 @@ EASING_OUT_CUBIC = QEasingCurve.Type.OutCubic if IS_QT6 else QEasingCurve.OutCub
 EASING_BEZIER = QEasingCurve.Type.BezierSpline if IS_QT6 else QEasingCurve.BezierSpline
 
 TOOLTIP_WINDOW = Qt.WindowType.ToolTip if IS_QT6 else Qt.ToolTip
+POPUP_WINDOW = Qt.WindowType.Popup if IS_QT6 else Qt.Popup
 
 # ---- QStyle：自绘 indicator 用到的枚举 ----
 PIXEL_METRIC = QStyle.PixelMetric if IS_QT6 else QStyle
@@ -133,6 +149,11 @@ PRIMITIVE_ELEMENT = QStyle.PrimitiveElement if IS_QT6 else QStyle
 STATE_FLAG = QStyle.StateFlag if IS_QT6 else QStyle
 
 ANTIALIASING = QPainter.RenderHint.Antialiasing if IS_QT6 else QPainter.Antialiasing
+SMOOTH_PIXMAP = (
+    QPainter.RenderHint.SmoothPixmapTransform
+    if IS_QT6
+    else QPainter.SmoothPixmapTransform
+)
 NO_PEN = Qt.PenStyle.NoPen if IS_QT6 else Qt.NoPen
 NO_BRUSH = Qt.BrushStyle.NoBrush if IS_QT6 else Qt.NoBrush
 ROUND_CAP = Qt.PenCapStyle.RoundCap if IS_QT6 else Qt.RoundCap
@@ -142,6 +163,7 @@ POINTING_HAND = (
     Qt.CursorShape.PointingHandCursor if IS_QT6 else Qt.PointingHandCursor
 )
 STRONG_FOCUS = Qt.FocusPolicy.StrongFocus if IS_QT6 else Qt.StrongFocus
+NO_FOCUS = Qt.FocusPolicy.NoFocus if IS_QT6 else Qt.NoFocus
 TEXT_BESIDE_ICON = (
     Qt.ToolButtonStyle.ToolButtonTextBesideIcon
     if IS_QT6

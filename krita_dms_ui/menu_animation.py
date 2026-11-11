@@ -12,19 +12,28 @@ from pathlib import Path
 
 from .qt_compat import (
     EASING_BEZIER,
+    HIDE_EVENT,
+    NO_FOCUS,
     POLISH_EVENT,
+    POPUP_WINDOW,
     SHOW_EVENT,
     QEasingCurve,
     QGraphicsOpacityEffect,
     QLabel,
     QMenu,
-    QMenuBar,
     QObject,
+    QPainter,
+    QPoint,
     QPointF,
     QPropertyAnimation,
+    QRect,
     QStandardPaths,
+    QWidget,
+    SMOOTH_PIXMAP,
     STANDARD_PATH,
     TOOLTIP_WINDOW,
+    WA_NO_SYSTEM_BACKGROUND,
+    WA_TRANSPARENT_FOR_MOUSE,
 )
 
 # DMS 的默认值：settings.json 只保存被改过的键
@@ -210,8 +219,29 @@ def read_motion(dms_path=None, kde_path=None):
     )
 
 
+class _MenuFadeOverlay(QWidget):
+    """菜单隐藏后，用最后一帧截图在主窗口里淡出。
+
+    QMenu 是原生 popup，Qt 在发出 ``aboutToHide`` 之前就已经把窗口
+    取消映射了，插件没法延迟 ``hide()``。所以只能截一帧盖在主窗口上。
+    覆盖层是主窗口的子控件，超出窗口的部分会被裁掉。
+    """
+
+    def __init__(self, parent, pixmap):
+        super().__init__(parent)
+        self._pixmap = pixmap
+        self.setAttribute(WA_TRANSPARENT_FOR_MOUSE, True)
+        self.setAttribute(WA_NO_SYSTEM_BACKGROUND, True)
+        self.setFocusPolicy(NO_FOCUS)
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(SMOOTH_PIXMAP, True)
+        painter.drawPixmap(0, 0, self._pixmap)
+
+
 class MenuAnimator(QObject):
-    """监听菜单弹出，给菜单栏下拉做淡入过渡。"""
+    """监听菜单弹出，给菜单 / 下拉列表做淡入淡出。"""
 
     def __init__(self, app):
         super().__init__(app)
@@ -220,6 +250,8 @@ class MenuAnimator(QObject):
         self._motion = read_motion()
         self._animations = {}
         self._effects = {}
+        self._pending_in = {}
+        self._fade_outs = {}
 
     def install(self):
         """挂到 QApplication 上；重复调用不会重复安装。"""
@@ -250,6 +282,8 @@ class MenuAnimator(QObject):
         for anim in list(self._animations.values()):
             anim.stop()
         self._animations.clear()
+        self._pending_in.clear()
+        self._clear_fade_outs()
 
         # 关闭时把残留的半透明效果复位，避免菜单变灰
         for effect in list(self._effects.values()):
@@ -269,24 +303,34 @@ class MenuAnimator(QObject):
                 self._fade_in(obj, duration, motion.effects_curve)
             return False
 
+        # QComboBox 的弹出列表是 QComboBoxPrivateContainer（QFrame）
+        if event_type == SHOW_EVENT and obj.metaObject().className() == "QComboBoxPrivateContainer":
+            motion = self._motion
+            duration = motion.effects_duration or motion.popup_duration
+            self._fade_in(obj, duration, motion.effects_curve)
+            return False
+
         if not isinstance(obj, QMenu):
             return False
 
         if event_type == POLISH_EVENT:
             self._hook_menu(obj)
         elif event_type == SHOW_EVENT:
-            # 如果菜单在过滤器安装前就 Polish 过，Show 时补挂并补一次动画
-            first_time = not obj.property("dms_anim_hooked")
+            # 有些菜单（例如很长的面板列表）在 aboutToShow 里做布局，
+            # 动画如果在那里启动，窗口真正出现时已经跑完了。
+            # 统一等到 Show 再启动。
             self._hook_menu(obj)
-            if first_time:
-                self._animate_in(obj)
+            self._show_menu(obj)
+        elif event_type == HIDE_EVENT:
+            self._pending_in.pop(obj, None)
         return False
 
     def _hook_menu(self, menu):
         if menu.property("dms_anim_hooked"):
             return
         menu.setProperty("dms_anim_hooked", True)
-        menu.aboutToShow.connect(lambda m=menu: self._animate_in(m))
+        menu.aboutToShow.connect(lambda m=menu: self._queue_menu_in(m))
+        menu.aboutToHide.connect(lambda m=menu: self._animate_out(m))
         self._ensure_cleanup(menu)
 
     def _ensure_cleanup(self, widget):
@@ -299,28 +343,13 @@ class MenuAnimator(QObject):
     def _forget(self, widget):
         self._animations.pop(widget, None)
         self._effects.pop(widget, None)
-
-    @staticmethod
-    def _is_menu_bar_menu(menu):
-        """只给菜单栏下拉做动画，避开右键菜单和子菜单。
-
-        QMenu 是独立的弹出窗口，``parentWidget`` 不一定就是 QMenuBar
-        （Krita 可能先以主窗口为父创建菜单，再挂到菜单栏），所以优先用
-        QAction 的关联对象判断，再回退到父级查找。
-        """
-        menu_action = menu.menuAction()
-
-        associated = getattr(menu_action, "associatedObjects", None)
-        if associated is not None:
-            return any(isinstance(obj, QMenuBar) for obj in associated())
-
-        parent = menu.parentWidget()
-        if isinstance(parent, QMenuBar):
-            return True
-        if parent is not None:
-            menu_bar = parent.window().findChild(QMenuBar)
-            return menu_bar is not None and menu_action in menu_bar.actions()
-        return False
+        self._pending_in.pop(widget, None)
+        overlay = self._fade_outs.pop(widget, None)
+        if overlay is not None:
+            try:
+                overlay.deleteLater()
+            except RuntimeError:
+                pass
 
     def _effect_for(self, menu):
         effect = self._effects.get(menu)
@@ -335,13 +364,115 @@ class MenuAnimator(QObject):
         self._effects[menu] = effect
         return effect
 
-    def _animate_in(self, menu):
+    def _fade_params(self, menu):
         motion = self._motion
         if not self._enabled or not motion.enabled or motion.popup_duration <= 0:
+            return None
+
+        # 子菜单出现频率高，用 effects 的短时长；顶层 / 右键菜单用 popup 时长
+        duration = motion.popup_duration
+        if isinstance(menu.parentWidget(), QMenu):
+            duration = min(duration, motion.effects_duration or duration)
+        return duration, motion.effects_curve
+
+    def _queue_menu_in(self, menu):
+        """aboutToShow 只负责把透明度置零，动画等 Show 再启动。"""
+        params = self._fade_params(menu)
+        if params is None:
             return
-        if not self._is_menu_bar_menu(menu):
+        self._effect_for(menu).setOpacity(0.0)
+        self._pending_in[menu] = params
+
+    def _show_menu(self, menu):
+        params = self._pending_in.pop(menu, None)
+        if params is None:
+            params = self._fade_params(menu)
+            if params is None:
+                return
+            # 没走 aboutToShow 的菜单，在 Show 时补一次置零
+            self._effect_for(menu).setOpacity(0.0)
+        self._fade_in(menu, *params)
+
+    @staticmethod
+    def _host_window(menu):
+        """菜单所属的普通顶层窗口（跳过 QMenu / ToolTip 这些 popup）。"""
+        parent = menu.parentWidget()
+        while parent is not None:
+            if parent.isWindow() and parent.windowType() not in (POPUP_WINDOW, TOOLTIP_WINDOW):
+                return parent
+            parent = parent.parentWidget()
+        return None
+
+    def _animate_out(self, menu):
+        """菜单隐藏后做淡出；用截图覆盖层是因为 QMenu 已经先被取消映射。"""
+        motion = self._motion
+        if not self._enabled or not motion.enabled:
             return
-        self._fade_in(menu, motion.popup_duration, motion.effects_curve)
+        if menu in self._fade_outs:
+            return
+        if self.app is None or self.app.closingDown():
+            return
+
+        host = self._host_window(menu)
+        if host is None or not host.isVisible():
+            return
+
+        # 菜单可能在淡入到一半时就被关闭：截图前先把效果暂时拉满，
+        # 否则覆盖层会是一张半透明的残影。
+        effect = menu.graphicsEffect()
+        previous_opacity = None
+        if isinstance(effect, QGraphicsOpacityEffect):
+            previous_opacity = effect.opacity()
+            effect.setOpacity(1.0)
+        pixmap = menu.grab()
+        if previous_opacity is not None:
+            try:
+                effect.setOpacity(previous_opacity)
+            except RuntimeError:
+                pass
+        if pixmap.isNull():
+            return
+
+        pos = host.mapFromGlobal(menu.mapToGlobal(QPoint(0, 0)))
+        if not host.rect().intersects(QRect(pos, menu.size())):
+            return
+
+        overlay = _MenuFadeOverlay(host, pixmap)
+        overlay.setGeometry(pos.x(), pos.y(), menu.width(), menu.height())
+        overlay.show()
+        overlay.raise_()
+
+        duration = motion.effects_duration or 100
+        effect = QGraphicsOpacityEffect(overlay)
+        overlay.setGraphicsEffect(effect)
+        effect.setOpacity(1.0)
+
+        anim = QPropertyAnimation(effect, b"opacity", overlay)
+        anim.setDuration(max(60, duration))
+        anim.setStartValue(1.0)
+        anim.setEndValue(0.0)
+        anim.setEasingCurve(motion.effects_curve)
+        anim.finished.connect(lambda m=menu: self._remove_fade_out(m))
+
+        self._fade_outs[menu] = overlay
+        anim.start()
+
+    def _remove_fade_out(self, menu):
+        overlay = self._fade_outs.pop(menu, None)
+        if overlay is not None:
+            try:
+                overlay.deleteLater()
+            except RuntimeError:
+                pass
+
+    def _clear_fade_outs(self):
+        for overlay in self._fade_outs.values():
+            try:
+                overlay.setParent(None)
+                overlay.deleteLater()
+            except RuntimeError:
+                pass
+        self._fade_outs.clear()
 
     def _fade_in(self, widget, duration, curve):
         """通用淡入：菜单与 tooltip 共用，效果对象按控件缓存。"""
