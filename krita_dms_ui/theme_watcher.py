@@ -11,16 +11,28 @@ matugen / DMS 换壁纸后会实时改写颜色方案文件，但 Krita 没有�
 
 from pathlib import Path
 
+from .menu_animation import read_motion
 from .qt_compat import (
     COLOR_GROUP,
     COLOR_ROLE,
+    NO_FOCUS,
     QColor,
+    QDialog,
     QFileSystemWatcher,
+    QGraphicsOpacityEffect,
+    QMainWindow,
     QObject,
+    QPainter,
     QPalette,
+    QPixmap,
+    QPropertyAnimation,
     QStandardPaths,
     QTimer,
+    QWidget,
+    SMOOTH_PIXMAP,
     STANDARD_PATH,
+    WA_NO_SYSTEM_BACKGROUND,
+    WA_TRANSPARENT_FOR_MOUSE,
 )
 
 _DEBOUNCE_MS = 300
@@ -258,6 +270,29 @@ def _core_colors(palette):
 
 
 # ---------------------------------------------------------------------------
+# 换色过渡：旧截图盖在新界面上淡出
+# ---------------------------------------------------------------------------
+
+class _FadeOverlay(QWidget):
+    """把切换前的窗口截图铺在新界面上，再用透明度动画淡出。"""
+
+    def __init__(self, parent, pixmap):
+        super().__init__(parent)
+        self._pixmap = pixmap
+        self.setAttribute(WA_TRANSPARENT_FOR_MOUSE, True)
+        self.setAttribute(WA_NO_SYSTEM_BACKGROUND, True)
+        self.setFocusPolicy(NO_FOCUS)
+        self.setGeometry(parent.rect())
+        self.show()
+        self.raise_()
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(SMOOTH_PIXMAP, True)
+        painter.drawPixmap(self.rect(), self._pixmap)
+
+
+# ---------------------------------------------------------------------------
 # 监听
 # ---------------------------------------------------------------------------
 
@@ -276,6 +311,8 @@ class ThemeWatcher(QObject):
         self._watcher.directoryChanged.connect(self._schedule)
         self._watched = set()
         self._last_signature = None
+        self._overlays = set()
+        self._pending_fade = None
 
         self._watch_config()
         for directory in _scheme_dirs():
@@ -288,7 +325,8 @@ class ThemeWatcher(QObject):
             self._last_signature = signature
             # Krita 启动时若没读过这个文件（例如文件比进程新），这里补一次
             if _core_colors(palette) != _core_colors(self.app.palette()):
-                self._apply(path, palette)
+                # 启动时的纠偏不做过渡，避免开窗就闪一下
+                self._apply(path, palette, animate=False)
 
     # ---- 监听 ----------------------------------------------------------
 
@@ -343,6 +381,67 @@ class ThemeWatcher(QObject):
         self._watch_path(path)
         self._apply(path, palette)
 
-    def _apply(self, path, palette):
+    def _apply(self, path, palette, animate=True):
+        # 先清掉上一次还没结束的过渡，再截住旧界面；
+        # 等新 QSS 落盘后再盖上去淡出
+        self._clear_overlays()
+        captures = self._capture_windows() if animate else []
+
         self.app.setProperty("KDE_COLOR_SCHEME_PATH", str(path))
         self.app.setPalette(palette)
+
+        if captures:
+            self._pending_fade = captures
+            # 扩展的 paletteChanged 处理器已经排了一个 singleShot(0)
+            # 去重载 QSS；这个定时器排在它后面，保证淡出的是新界面。
+            QTimer.singleShot(0, self._start_fade)
+
+    def _capture_windows(self):
+        captures = []
+        for widget in self.app.topLevelWidgets():
+            if not isinstance(widget, (QMainWindow, QDialog)):
+                continue
+            if not widget.isVisible() or widget.width() <= 0 or widget.height() <= 0:
+                continue
+            pixmap = widget.grab()
+            if not pixmap.isNull():
+                captures.append((widget, pixmap))
+        return captures
+
+    def _start_fade(self):
+        captures, self._pending_fade = self._pending_fade, None
+        if not captures:
+            return
+
+        motion = read_motion()
+        if not motion.enabled or motion.reduce_motion:
+            return
+
+        duration = min(max(motion.spatial_duration or 180, 160), 260)
+        for window, pixmap in captures:
+            if not window.isVisible():
+                continue
+            overlay = _FadeOverlay(window, pixmap)
+            effect = QGraphicsOpacityEffect(overlay)
+            overlay.setGraphicsEffect(effect)
+            effect.setOpacity(1.0)
+
+            anim = QPropertyAnimation(effect, b"opacity", overlay)
+            anim.setDuration(duration)
+            anim.setStartValue(1.0)
+            anim.setEndValue(0.0)
+            anim.setEasingCurve(motion.effects_curve)
+            anim.finished.connect(lambda o=overlay: self._remove_overlay(o))
+
+            self._overlays.add(overlay)
+            anim.start()
+
+    def _remove_overlay(self, overlay):
+        self._overlays.discard(overlay)
+        overlay.deleteLater()
+
+    def _clear_overlays(self):
+        for overlay in list(self._overlays):
+            self._overlays.discard(overlay)
+            overlay.setParent(None)  # 立刻从窗口移除，避免被新的截图带上
+            overlay.deleteLater()

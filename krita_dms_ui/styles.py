@@ -62,7 +62,7 @@ QToolBar QToolButton:pressed, QToolBar QToolButton:checked {
 /* ====== 弹出菜单 ====== */
 QMenu { background-color: {{SURFACE_CONTAINER_HIGH}}; border: 1px solid {{BORDER}}; border-radius: 8px; padding: 6px; outline: none; }
 QMenu::item { background-color: transparent; padding: 6px 24px 6px 12px; border-radius: 6px; color: {{TEXT}}; }
-QMenu::item:selected { background-color: {{ACTIVE_BG}}; color: {{TEXT}}; border-radius: 8px; }
+QMenu::item:selected { background-color: {{ACTIVE_BG}}; color: {{TEXT}}; }
 QMenu::item:disabled { color: {{TEXT_DISABLED}}; background-color: transparent; }
 QMenu::separator { height: 1px; background: {{BORDER}}; margin: 4px 8px; }
 QMenu QLabel, QMenu QCheckBox, QMenu QRadioButton { color: {{TEXT}}; background: transparent; }
@@ -100,12 +100,7 @@ QTreeView::item, QListView::item, QListWidget::item {
     color: {{TEXT}};
 }
 QTreeView::item:hover:!selected, QListView::item:hover:!selected, QListWidget::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
-/* 选中项用更大的圆角，对应 DMS 的 shape morph 静态版本（QSS 无法做圆角补间） */
-QTreeView::item:selected, QListView::item:selected, QListWidget::item:selected {
-    background-color: {{PRIMARY_CONTAINER}};
-    color: {{ON_PRIMARY_CONTAINER}};
-    border-radius: 10px;
-}
+QTreeView::item:selected, QListView::item:selected, QListWidget::item:selected { background-color: {{PRIMARY_CONTAINER}}; color: {{ON_PRIMARY_CONTAINER}}; }
 
 /* ====== 表头 / 表格 ====== */
 QTableView, QTableWidget { background-color: {{BG}}; border: none; gridline-color: {{BORDER}}; }
@@ -126,7 +121,7 @@ QTableCornerButton::section { background-color: {{SURFACE_CONTAINER}}; border: n
 QDialog QListView { padding: 0px 6px; }
 QDialog QListView::item { border-radius: 6px; padding: 2px 4px; margin: 2px 0px; color: {{TEXT}}; }
 QDialog QListView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
-QDialog QListView::item:selected { background-color: {{PRIMARY_CONTAINER}}; color: {{ON_PRIMARY_CONTAINER}}; border-radius: 10px; }
+QDialog QListView::item:selected { background-color: {{PRIMARY_CONTAINER}}; color: {{ON_PRIMARY_CONTAINER}}; }
 
 /* ====== 按钮 ====== */
 QPushButton { background-color: {{SURFACE_CONTAINER_HIGH}}; border: none; border-radius: 6px; padding: 5px 12px; color: {{TEXT}}; }
