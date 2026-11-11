@@ -149,6 +149,9 @@ def setup_ui_settings(window, extension):
     action_menu_animation.setChecked(
         read_bool_setting(SETTING_MENU_ANIMATION, default=True)
     )
+    action_menu_animation.setToolTip(
+        "跟随 DankMaterialShell 的动效设置；DMS 开启减少动态效果时自动关闭"
+    )
 
     def on_menu_animation_toggled(checked, ext=extension):
         write_bool_setting(SETTING_MENU_ANIMATION, checked)

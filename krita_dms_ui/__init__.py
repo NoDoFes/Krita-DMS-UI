@@ -211,6 +211,10 @@ class DMSModernUIExtension(Extension):
         if colors is None:
             return
 
+        # 跟随 DMS 的动效设置（reduceMotion / 时长 / 曲线）
+        if self.menu_animator is not None:
+            self.menu_animator.refresh_motion()
+
         # Krita 可能在插件启动之后才套用自己的调色板，这里补一次，
         # 保证选中态文字色不会退回 matugen 的原始 HighlightedText。
         self.sync_palette(colors)

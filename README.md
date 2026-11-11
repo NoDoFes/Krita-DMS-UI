@@ -11,7 +11,7 @@
 - **M3 状态层**：hover 8%、focus 10%、禁用 38%，选中项使用 `primary-container` 柔和着色，避免整块主色实心块；颜色全部由 QPalette 派生。
 - **表头 / 提示气泡**：补齐 `QHeaderView`、`QTableView`、`QToolTip` 等默认控件的暗色适配。
 - **去除菜单黑边**：通过全局事件过滤器给 `QMenu` 打补丁，消除 Qt 经典黑边，保留圆角。
-- **菜单弹出动画**：菜单栏下拉按 Material You 3 的节奏做淡入过渡（可开关），不再生硬弹出。
+- **菜单弹出动画**：菜单栏下拉按 Material You 3 的节奏做淡入过渡（可开关）；时长与曲线直接跟随 DankMaterialShell 的动效设置（`settings.json` 的 `animationDuration` / `popoutAnimationDuration` / `interfaceStyle` / `reduceMotion`），读不到时退回 KDE `AnimationDurationFactor`。
 - **欢迎页统一风格**：社区资源的图标与文字合并进同一个圆角行（整行可点击，hover / 按下有状态层），新建 / 打开改为 tonal 卡片；社区链接去掉下划线并加 `↗` 提示，`正在运行测试版本` 保持原有链接与下划线。
 - **DMS UI 控制台**：在菜单栏最右侧新增 `DMS UI` 菜单，可以：
   - 显示 / 隐藏任意顶部菜单项（文件、编辑、视图……）
@@ -79,7 +79,7 @@ ln -sfn "$PWD/krita_dms_ui.desktop" ~/.local/share/krita/pykrita/krita_dms_ui.de
 
 - **显示/隐藏顶部菜单**：勾选控制各个顶部菜单项是否显示。即使把所有菜单都隐藏了，`DMS UI` 本身仍然保留，方便恢复。
 - **隐藏菜单栏快捷键提示**：把菜单文字里的 `(Ctrl+X)` 之类提示去掉，界面更干净。
-- **菜单弹出动画**：控制顶栏下拉的淡入过渡，默认开启。
+- **菜单弹出动画**：控制顶栏下拉的淡入过渡，默认开启；会跟随 DMS 的 `reduceMotion` 自动关闭。
 - **🔄 重载当前主题色**：切换系统主题后，不需要重启 Krita，点一下即可重新读取调色板。
 
 ## 🧩 项目结构
@@ -92,7 +92,7 @@ Krita_dmsUI/
 │   ├── icons.py          # SVG 图标素材库：模板按主题上色、渲染到缓存并供 QSS 引用
 │   ├── assets/icons/     # SVG 模板（{{COLOR}} 占位）
 │   ├── hacks.py          # 欢迎页补丁 + 菜单黑边 / 内嵌文字修复 + M3 勾选控件自绘
-│   ├── menu_animation.py # 菜单栏下拉的 Material You 3 淡入动画
+│   ├── menu_animation.py # 动效层：DMS/M3 动效 token + 菜单栏下拉淡入
 │   ├── qt_compat.py      # PyQt5 / PyQt6 兼容层（Qt 类与枚举常量统一入口）
 │   └── settings_ui.py    # DMS UI 菜单、设置键、菜单显隐与快捷键提示
 ├── krita_dms_ui.desktop   # Krita 插件声明
@@ -140,7 +140,7 @@ python3 update_context.py
 - **画布角度框单独收紧 padding**：状态栏的 `KisAngleSelectorSpinBox` 由 Krita 自己计算最小高度（约 24px），并且在 hover / focus 时会重写这个控件的 widget stylesheet。插件给它打上 `dmsAngleSpin` 标记，QSS 用 ID 选择器去掉上下 padding，避免 `0.00°` 的数字被裁掉。
 - **欢迎页改写方式**：社区资源的每行合成一个 `QToolButton`（图标 + 文字），原来的图标按钮和链接标签只隐藏、不销毁，Krita 的 `retranslateUi` / 主题刷新仍能安全写入；样式只在字符串变化时重设，避免重复 `polish`。`devBuildLabel`（正在运行测试版本）完全不动，保留它自己的链接与下划线。
 - **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页样式先比较再写入，避免重复 `polish`。
-- **菜单动画为最小实现**：目前只有顶栏下拉的淡入（200ms），不含位移 / 缩放 / 退出动画。动画使用 `QGraphicsOpacityEffect`（客户端渲染），在 Wayland 下同样生效；不想用时可在 `DMS UI → 菜单弹出动画` 关闭。
+- **菜单动画跟随 DMS 动效**：时长优先取 DMS 的 `popoutAnimationDuration`（默认 150ms），曲线用 `expressiveEffects`（`interfaceStyle=classic` 时退回 `standardDecel`），并读取 `reduceMotion` / `animationDuration`；没有 DMS 时退回 KDE `AnimationDurationFactor`。动效参数在主题刷新 / 新窗口创建时重新读取，不需要重启 Krita。目前只有顶栏下拉的淡入，不含位移 / 缩放 / 退出动画；动画使用 `QGraphicsOpacityEffect`（客户端渲染），在 Wayland 下同样生效。
 - **Qt 版本兼容**：PyQt5 / PyQt6 的枚举差异统一由 `qt_compat.py` 处理，新增代码请从这里导入 Qt 类和常量，不要再写裸 `QEvent.Type` / `Qt.WindowType`。
 - **Qt QSS 不支持 `!important`**：写自定义样式时请用选择器优先级和书写顺序来控制覆盖关系，不要依赖 `!important`。
 
