@@ -137,6 +137,7 @@ python3 update_context.py
 - **部分控件只认调色板**：KDE 的 `KPageListViewDelegate`（配置对话框左侧栏）等自绘 delegate 不读 QSS 的 `color`，所以选中态的 `Highlight` / `HighlightedText` 由插件同步写入 `QPalette`，与 QSS 的 `primary-container` 保持一致。`KPageDialog` 在显示时还会显式套用当前应用调色板，并单独校正侧栏 `KPageListView`，避免从画布窗口继承到 matugen 的深色选中文字。
 - **勾选控件是 M3 自绘**：QSS 画不出勾号和圆点，所以 `hacks.py` 里用 `QProxyStyle`（`IndicatorStyle`）绘制——checkbox 是圆角方形，选中为 `primary` 填充 + `on-primary` 勾号，不确定态画横杠；radio 是圆环 + 圆点，选中用 `primary`；`QTreeView` / `QListView` 的勾选复用同一套画法，尺寸小一号。颜色取自 `styles.get_indicator_colors()`，跟随主题切换，不引入 SVG / PNG。注意：Krita 的「样式」菜单会调用 `QApplication.setStyle()` 换掉代理样式，插件会在刷新 / 新窗口时自动重新包裹。
 - **SpinBox 上下箭头来自 SVG 素材库**：`assets/icons/` 的模板由 `icons.py` 按当前主题色渲染到用户缓存目录，QSS 用 `image: url(...)` 引用，浅色 / 深色与禁用态都跟随调色板，不引入 PNG。**ComboBox 下拉箭头暂未绘制**，后续复用同一套素材补齐。
+- **画布角度框单独收紧 padding**：状态栏的 `KisAngleSelectorSpinBox` 由 Krita 自己计算最小高度（约 24px），并且在 hover / focus 时会重写这个控件的 widget stylesheet。插件给它打上 `dmsAngleSpin` 标记，QSS 用 ID 选择器去掉上下 padding，避免 `0.00°` 的数字被裁掉。
 - **欢迎页改写方式**：社区资源的每行合成一个 `QToolButton`（图标 + 文字），原来的图标按钮和链接标签只隐藏、不销毁，Krita 的 `retranslateUi` / 主题刷新仍能安全写入；样式只在字符串变化时重设，避免重复 `polish`。`devBuildLabel`（正在运行测试版本）完全不动，保留它自己的链接与下划线。
 - **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页样式先比较再写入，避免重复 `polish`。
 - **菜单动画为最小实现**：目前只有顶栏下拉的淡入（200ms），不含位移 / 缩放 / 退出动画。动画使用 `QGraphicsOpacityEffect`（客户端渲染），在 Wayland 下同样生效；不想用时可在 `DMS UI → 菜单弹出动画` 关闭。

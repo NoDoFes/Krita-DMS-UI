@@ -18,6 +18,7 @@ from .hacks import (
     MenuFilter,
     ensure_indicator_style,
     inherit_app_palette,
+    patch_angle_spinbox,
     patch_welcome_page,
 )
 from .menu_animation import MenuAnimator
@@ -210,6 +211,7 @@ class DMSModernUIExtension(Extension):
         for win in Krita.instance().windows():
             qwin = win.qwindow()
             patch_welcome_page(qwin, colors)
+            patch_angle_spinbox(qwin)
             apply_menu_text_settings(qwin)
             apply_menu_visibility_settings(qwin)
 

@@ -197,6 +197,13 @@ QSpinBox::up-arrow:off, QDoubleSpinBox::up-arrow:off { image: {{SPIN_UP_DISABLED
 QSpinBox::down-arrow:disabled, QDoubleSpinBox::down-arrow:disabled,
 QSpinBox::down-arrow:off, QDoubleSpinBox::down-arrow:off { image: {{SPIN_DOWN_DISABLED_ICON}}; }
 
+/* 画布状态栏的角度框（KisAngleSelectorSpinBox）由 Krita 自己算最小高度，
+   只有 24px 左右；它还会在 hover / focus 时重写控件的 widget stylesheet，
+   普通类型选择器会被压掉。这里用 objectName 标记（hacks.patch_angle_spinbox）
+   配合 ID 选择器收紧 padding，保证数字不被裁掉。 */
+#dmsAngleSpin { padding: 0px 6px; }
+#dmsAngleSpin QLineEdit { padding: 0px; }
+
 QComboBox::drop-down { border: none; width: 20px; }
 QComboBox QAbstractItemView { background-color: {{SURFACE_CONTAINER_HIGH}}; border: 1px solid {{BORDER}}; border-radius: 6px; selection-background-color: {{PRIMARY_CONTAINER}}; selection-color: {{ON_PRIMARY_CONTAINER}}; color: {{TEXT}}; }
 

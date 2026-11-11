@@ -29,6 +29,7 @@ from .qt_compat import (
     QCheckBox,
     QDesktopServices,
     QDialog,
+    QDoubleSpinBox,
     QLabel,
     QListView,
     QListWidget,
@@ -348,6 +349,26 @@ def patch_welcome_page(qwin, colors):
             }}
             """,
         )
+
+
+def patch_angle_spinbox(qwin):
+    """给画布角度框打上 objectName，让 QSS 的 ID 选择器收紧 padding。
+
+    状态栏里的 ``KisAngleSelectorSpinBox`` 最小高度由 Krita 自己计算
+    （约 24px），而且它会在 hover / focus 时重写这个控件的 widget
+    stylesheet，普通类型选择器会被覆盖。ID 选择器的优先级更高，
+    可以在所有状态下生效，避免数字被上下裁掉。
+    """
+    for spin in qwin.findChildren(QDoubleSpinBox):
+        if spin.objectName() == "dmsAngleSpin":
+            continue
+        if spin.metaObject().className() != "KisAngleSelectorSpinBox":
+            continue
+        spin.setObjectName("dmsAngleSpin")
+        # 重新套一次自身的 widget stylesheet：qobject 的 objectName 变化
+        # 不会自动让应用级 QSS 按新 ID 重新匹配，重置样式表可以强制刷新。
+        sheet = spin.styleSheet()
+        spin.setStyleSheet(sheet if sheet else "QDoubleSpinBox{}")
 
 
 class MenuFilter(QObject):
