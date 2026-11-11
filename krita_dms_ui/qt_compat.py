@@ -11,6 +11,7 @@ try:
     from PyQt6.QtCore import (
         QEasingCurve,
         QEvent,
+        QFileSystemWatcher,
         QObject,
         QPointF,
         QPropertyAnimation,
@@ -53,6 +54,7 @@ except ImportError:
     from PyQt5.QtCore import (
         QEasingCurve,
         QEvent,
+        QFileSystemWatcher,
         QObject,
         QPointF,
         QPropertyAnimation,
@@ -122,6 +124,8 @@ NO_DROP_SHADOW_WINDOW_HINT = (
 
 EASING_OUT_CUBIC = QEasingCurve.Type.OutCubic if IS_QT6 else QEasingCurve.OutCubic
 EASING_BEZIER = QEasingCurve.Type.BezierSpline if IS_QT6 else QEasingCurve.BezierSpline
+
+TOOLTIP_WINDOW = Qt.WindowType.ToolTip if IS_QT6 else Qt.ToolTip
 
 # ---- QStyle：自绘 indicator 用到的枚举 ----
 PIXEL_METRIC = QStyle.PixelMetric if IS_QT6 else QStyle

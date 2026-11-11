@@ -16,6 +16,7 @@ from .qt_compat import (
     SHOW_EVENT,
     QEasingCurve,
     QGraphicsOpacityEffect,
+    QLabel,
     QMenu,
     QMenuBar,
     QObject,
@@ -23,6 +24,7 @@ from .qt_compat import (
     QPropertyAnimation,
     QStandardPaths,
     STANDARD_PATH,
+    TOOLTIP_WINDOW,
 )
 
 # DMS 的默认值：settings.json 只保存被改过的键
@@ -257,10 +259,19 @@ class MenuAnimator(QObject):
                 pass
 
     def eventFilter(self, obj, event):
+        event_type = event.type()
+
+        # QToolTip 的标签是 Qt.ToolTip 类型的 QLabel，做一次短淡入
+        if isinstance(obj, QLabel) and obj.windowType() == TOOLTIP_WINDOW:
+            if event_type == SHOW_EVENT:
+                motion = self._motion
+                duration = motion.effects_duration or motion.popup_duration
+                self._fade_in(obj, duration, motion.effects_curve)
+            return False
+
         if not isinstance(obj, QMenu):
             return False
 
-        event_type = event.type()
         if event_type == POLISH_EVENT:
             self._hook_menu(obj)
         elif event_type == SHOW_EVENT:
@@ -276,12 +287,18 @@ class MenuAnimator(QObject):
             return
         menu.setProperty("dms_anim_hooked", True)
         menu.aboutToShow.connect(lambda m=menu: self._animate_in(m))
-        # 菜单销毁后清掉引用，避免 _animations / _effects 长期持有失效对象
-        menu.destroyed.connect(lambda _=None, m=menu: self._forget(m))
+        self._ensure_cleanup(menu)
 
-    def _forget(self, menu):
-        self._animations.pop(menu, None)
-        self._effects.pop(menu, None)
+    def _ensure_cleanup(self, widget):
+        """控件销毁后清掉引用，避免 _animations / _effects 长期持有失效对象。"""
+        if widget.property("dms_cleanup_hooked"):
+            return
+        widget.setProperty("dms_cleanup_hooked", True)
+        widget.destroyed.connect(lambda _=None, w=widget: self._forget(w))
+
+    def _forget(self, widget):
+        self._animations.pop(widget, None)
+        self._effects.pop(widget, None)
 
     @staticmethod
     def _is_menu_bar_menu(menu):
@@ -324,25 +341,32 @@ class MenuAnimator(QObject):
             return
         if not self._is_menu_bar_menu(menu):
             return
+        self._fade_in(menu, motion.popup_duration, motion.effects_curve)
 
-        old = self._animations.pop(menu, None)
+    def _fade_in(self, widget, duration, curve):
+        """通用淡入：菜单与 tooltip 共用，效果对象按控件缓存。"""
+        if not self._enabled or not self._motion.enabled or duration <= 0:
+            return
+
+        self._ensure_cleanup(widget)
+        old = self._animations.pop(widget, None)
         if old is not None:
             old.stop()
 
-        effect = self._effect_for(menu)
+        effect = self._effect_for(widget)
 
-        # aboutToShow 在窗口显示前触发，先置零可以避免第一帧闪烁
+        # aboutToShow / Show 在窗口显示前触发，先置零可以避免第一帧闪烁
         effect.setOpacity(0.0)
 
-        anim = QPropertyAnimation(effect, b"opacity", menu)
-        anim.setDuration(motion.popup_duration)
+        anim = QPropertyAnimation(effect, b"opacity", widget)
+        anim.setDuration(duration)
         anim.setStartValue(0.0)
         anim.setEndValue(1.0)
-        anim.setEasingCurve(motion.effects_curve)
-        anim.finished.connect(lambda m=menu: self._finish(m))
+        anim.setEasingCurve(curve)
+        anim.finished.connect(lambda w=widget: self._finish(w))
 
         # 持有引用，防止动画对象被 Python 提前回收
-        self._animations[menu] = anim
+        self._animations[widget] = anim
         anim.start()
 
     def _finish(self, menu):

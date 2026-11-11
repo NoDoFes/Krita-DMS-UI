@@ -162,12 +162,6 @@ def setup_ui_settings(window, extension):
     action_menu_animation.toggled.connect(on_menu_animation_toggled)
     dms_menu.addAction(action_menu_animation)
 
-    dms_menu.addSeparator()
-
-    action_refresh = window.createAction("dms_refresh_theme", "🔄 重载当前主题色", "")
-    action_refresh.triggered.connect(extension.refresh_theme)
-    dms_menu.addAction(action_refresh)
-
     # 初次加载时应用一次
     apply_menu_text_settings(qwin)
     apply_menu_visibility_settings(qwin)

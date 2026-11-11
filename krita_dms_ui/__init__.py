@@ -22,6 +22,7 @@ from .hacks import (
     patch_welcome_page,
 )
 from .menu_animation import MenuAnimator
+from .theme_watcher import ThemeWatcher
 from .settings_ui import (
     SETTING_MENU_ANIMATION,
     apply_menu_text_settings,
@@ -37,6 +38,7 @@ class DMSModernUIExtension(Extension):
         self.app = QApplication.instance()
         self.menu_filter = None
         self.menu_animator = None
+        self.theme_watcher = None
         self._dms_menu = None
         # matugen 注入的原始主色；与插件改写后的 Highlight 分开保存
         self._primary = None
@@ -55,9 +57,13 @@ class DMSModernUIExtension(Extension):
         # 启动时只注入一次全局 QSS（很快，避免拖慢启动）
         self.apply_global_theme()
 
-        # matugen 可能在运行中重新注入调色板，重新对齐选中态
+        # matugen 可能在运行中重新注入调色板，重新对齐选中态。
+        # 必须在装 watcher 之前连好：watcher 可能在启动时就纠正一次
+        # 「文件比进程新」的调色板。
         if self.app is not None:
             self.app.paletteChanged.connect(self._on_app_palette_changed)
+
+        self._install_theme_watcher()
 
         # 欢迎页 / 菜单文本等窗口级操作延迟 1 秒
         QTimer.singleShot(1000, self.apply_heavy_hacks)
@@ -80,6 +86,12 @@ class DMSModernUIExtension(Extension):
         enabled = read_bool_setting(SETTING_MENU_ANIMATION, default=True)
         self.menu_animator.set_enabled(enabled)
         self.menu_animator.install()
+
+    def _install_theme_watcher(self):
+        """监听 .colors 变化，换壁纸后不再需要重启 Krita。"""
+        if self.theme_watcher is not None or self.app is None:
+            return
+        self.theme_watcher = ThemeWatcher(self.app)
 
     # ---- 主题 ----------------------------------------------------------
 
