@@ -20,8 +20,10 @@ try:
     from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
+        QDialog,
         QGraphicsOpacityEffect,
         QLabel,
+        QListView,
         QListWidget,
         QMenu,
         QMenuBar,
@@ -43,8 +45,10 @@ except ImportError:
     from PyQt5.QtWidgets import (
         QApplication,
         QCheckBox,
+        QDialog,
         QGraphicsOpacityEffect,
         QLabel,
+        QListView,
         QListWidget,
         QMenu,
         QMenuBar,

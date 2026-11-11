@@ -117,11 +117,11 @@ QHeaderView::section:hover { background-color: {{HOVER_BG}}; }
 QHeaderView::section:checked { background-color: {{SURFACE_CONTAINER_HIGH}}; }
 QTableCornerButton::section { background-color: {{SURFACE_CONTAINER}}; border: none; }
 
-/* ====== 特殊修补：配置窗口左侧 ====== */
-KisConfigView, QDialog QListView { padding: 0px 6px; }
-KisConfigView::item, QDialog QListView::item { border-radius: 6px; padding: 2px 4px; margin: 2px 0px; color: {{TEXT}}; }
-KisConfigView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
-KisConfigView::item:selected { background-color: {{PRIMARY_CONTAINER}}; color: {{ON_PRIMARY_CONTAINER}}; }
+/* ====== 特殊修补：配置窗口左侧（KPageListView 是 QListView 子类） ====== */
+QDialog QListView { padding: 0px 6px; }
+QDialog QListView::item { border-radius: 6px; padding: 2px 4px; margin: 2px 0px; color: {{TEXT}}; }
+QDialog QListView::item:hover:!selected { background-color: {{HOVER_BG}}; color: {{TEXT}}; }
+QDialog QListView::item:selected { background-color: {{PRIMARY_CONTAINER}}; color: {{ON_PRIMARY_CONTAINER}}; }
 
 /* ====== 按钮 ====== */
 QPushButton { background-color: {{SURFACE_CONTAINER_HIGH}}; border: none; border-radius: 6px; padding: 5px 12px; color: {{TEXT}}; }
@@ -361,16 +361,21 @@ def _text_on(background):
 # 调色板 → 语义色
 # ---------------------------------------------------------------------------
 
-def get_theme_colors(palette, color_role):
+def get_theme_colors(palette, color_role, primary=None):
     """把 Krita 当前调色板映射成 M3 语义 token。
 
     颜色全部来自 QPalette（matugen 注入），这里只做明暗适配与状态层推导：
     - surface / on-surface 来自 Window / WindowText
-    - primary 来自 Highlight
+    - primary 来自 Highlight（或调用方缓存的原始主色）
     - container / outline / 状态层由 primary、on-surface 混合得到
+
+    ``primary`` 用于打破循环：插件会把 ``Highlight`` 改写成
+    ``primary-container``（让 delegate 的选中文字色与 QSS 背景一致），
+    之后不能再从 ``Highlight`` 反推主色，否则每次刷新都会越变越暗。
     """
     surface = QColor(palette.color(color_role.Window))
-    primary = QColor(palette.color(color_role.Highlight))
+    primary = QColor(primary) if primary is not None else QColor(palette.color(color_role.Highlight))
+
 
     # 文字优先使用注入的 WindowText；对比度不足时才回退黑/白
     injected_text = QColor(palette.color(color_role.WindowText))

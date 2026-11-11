@@ -104,6 +104,8 @@ Krita_dmsUI/
 
 - `Window` → `surface`，`WindowText` → `on-surface`（对比度不足 4.5:1 时回退黑 / 白）
 - `Highlight` → `primary`，其上文字按 WCAG 对比度自动取黑 / 白
+- 选中态统一为 `primary-container` / `on-primary-container`，并同步写回 `QPalette` 的 `Highlight` / `HighlightedText`：Qt 与 KDE 的 delegate（例如配置对话框左侧的 `KPageListViewDelegate`）只从调色板取文字色，不读 QSS 的 `color`
+- 插件会缓存 matugen 注入的原始主色，避免改写 `Highlight` 之后再次推导时颜色逐次变暗
 - `surface-container`、`outline`、`outline-variant` 由 `on-surface` 与 `surface` 混合得到
 - hover / focus / disabled 分别用 8% / 10% / 38% 的状态层推导，边框不再写死 rgba
 - 同时导出 M3 语义 token（`PRIMARY_CONTAINER`、`ON_SURFACE_VARIANT` 等），组件样式逐步迁移
@@ -127,7 +129,8 @@ python3 update_context.py
 - **已验证环境**：Krita 6.x（Qt6 / PyQt6，Linux）。代码保留了 PyQt5 兼容分支，但主要在 Krita 6 上开发验证，Krita 5.x 尚未充分测试。
 - **不要和其他 UI 插件同时启用**：例如 krita-morandiUI、Style Sheet Loader 等。全局 QSS 会互相覆盖，容易出现样式错乱。
 - **部分控件不受 QSS 控制**：Krita 有不少 C++ 自绘控件（画布周边、部分色彩选择器等），需要针对 `objectName` 单独打补丁。
-- **切换主题后自动刷新**：点一次 **DMS UI → 🔄 重载当前主题色**，会同时刷新全局 QSS、调色板和欢迎页，不需要重启 Krita。
+- **切换主题后自动刷新**：matugen 在运行中重新注入 `QPalette` 时会自动重载 QSS、选中态和欢迎页；也可以手动点 **DMS UI → 🔄 重载当前主题色**。插件记录的调色板签名包含 `Highlight` / `HighlightedText`，因此 Krita 用同一个 `.colors` 重放主题（例如打开画布后）也能被识别并自动修复。
+- **部分控件只认调色板**：KDE 的 `KPageListViewDelegate`（配置对话框左侧栏）等自绘 delegate 不读 QSS 的 `color`，所以选中态的 `Highlight` / `HighlightedText` 由插件同步写入 `QPalette`，与 QSS 的 `primary-container` 保持一致。`KPageDialog` 在显示时还会显式套用当前应用调色板，并单独校正侧栏 `KPageListView`，避免从画布窗口继承到 matugen 的深色选中文字。
 - **复选框是空心圆 / 实心圆**：沿用当前设计，不使用勾号，也不引入 SVG 资源；禁用态会降为灰色。
 - **SpinBox / ComboBox 箭头暂未绘制**：自定义 `up/down-button` 后 Qt 不再画默认箭头，后续用 `QProxyStyle` 或 SVG 补。
 - **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页只在颜色变化时重绘，避免重复 `polish`。
