@@ -89,7 +89,7 @@ Krita_dmsUI/
 ├── krita_dms_ui/
 │   ├── __init__.py       # 插件入口：注册 Extension、注入全局 QSS、调度耗时任务
 │   ├── styles.py         # QSS 模板 + 主题色提取（get_theme_colors / build_qss）
-│   ├── hacks.py          # 欢迎页补丁 + 菜单黑边 / 内嵌文字修复
+│   ├── hacks.py          # 欢迎页补丁 + 菜单黑边 / 内嵌文字修复 + M3 勾选控件自绘
 │   ├── menu_animation.py # 菜单栏下拉的 Material You 3 淡入动画
 │   ├── qt_compat.py      # PyQt5 / PyQt6 兼容层（Qt 类与枚举常量统一入口）
 │   └── settings_ui.py    # DMS UI 菜单、设置键、菜单显隐与快捷键提示
@@ -109,6 +109,7 @@ Krita_dmsUI/
 - `surface-container`、`outline`、`outline-variant` 由 `on-surface` 与 `surface` 混合得到
 - hover / focus / disabled 分别用 8% / 10% / 38% 的状态层推导，边框不再写死 rgba
 - 同时导出 M3 语义 token（`PRIMARY_CONTAINER`、`ON_SURFACE_VARIANT` 等），组件样式逐步迁移
+- 勾选控件由 `QProxyStyle` 自绘，颜色同样来自 token：`PRIMARY` / `ON_PRIMARY` 画选中态，`OUTLINE` 画未选中边框，禁用态用 12% 容器与 38% 前景
 
 想换整体配色，交给 matugen 注入即可；想调组件样式，改 `styles.py` 的 `MODERN_QSS` 模板。
 
@@ -131,7 +132,7 @@ python3 update_context.py
 - **部分控件不受 QSS 控制**：Krita 有不少 C++ 自绘控件（画布周边、部分色彩选择器等），需要针对 `objectName` 单独打补丁。
 - **切换主题后自动刷新**：matugen 在运行中重新注入 `QPalette` 时会自动重载 QSS、选中态和欢迎页；也可以手动点 **DMS UI → 🔄 重载当前主题色**。插件记录的调色板签名包含 `Highlight` / `HighlightedText`，因此 Krita 用同一个 `.colors` 重放主题（例如打开画布后）也能被识别并自动修复。
 - **部分控件只认调色板**：KDE 的 `KPageListViewDelegate`（配置对话框左侧栏）等自绘 delegate 不读 QSS 的 `color`，所以选中态的 `Highlight` / `HighlightedText` 由插件同步写入 `QPalette`，与 QSS 的 `primary-container` 保持一致。`KPageDialog` 在显示时还会显式套用当前应用调色板，并单独校正侧栏 `KPageListView`，避免从画布窗口继承到 matugen 的深色选中文字。
-- **复选框是空心圆 / 实心圆**：沿用当前设计，不使用勾号，也不引入 SVG 资源；禁用态会降为灰色。
+- **勾选控件是 M3 自绘**：QSS 画不出勾号和圆点，所以 `hacks.py` 里用 `QProxyStyle`（`IndicatorStyle`）绘制——checkbox 是圆角方形，选中为 `primary` 填充 + `on-primary` 勾号，不确定态画横杠；radio 是圆环 + 圆点，选中用 `primary`；`QTreeView` / `QListView` 的勾选复用同一套画法，尺寸小一号。颜色取自 `styles.get_indicator_colors()`，跟随主题切换，不引入 SVG / PNG。注意：Krita 的「样式」菜单会调用 `QApplication.setStyle()` 换掉代理样式，插件会在刷新 / 新窗口时自动重新包裹。
 - **SpinBox / ComboBox 箭头暂未绘制**：自定义 `up/down-button` 后 Qt 不再画默认箭头，后续用 `QProxyStyle` 或 SVG 补。
 - **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页只在颜色变化时重绘，避免重复 `polish`。
 - **菜单动画为最小实现**：目前只有顶栏下拉的淡入（200ms），不含位移 / 缩放 / 退出动画。动画使用 `QGraphicsOpacityEffect`（客户端渲染），在 Wayland 下同样生效；不想用时可在 `DMS UI → 菜单弹出动画` 关闭。

@@ -12,11 +12,13 @@ try:
         QEasingCurve,
         QEvent,
         QObject,
+        QPointF,
         QPropertyAnimation,
+        QRectF,
         QTimer,
         Qt,
     )
-    from PyQt6.QtGui import QColor, QPalette
+    from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
     from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -27,7 +29,9 @@ try:
         QListWidget,
         QMenu,
         QMenuBar,
+        QProxyStyle,
         QRadioButton,
+        QStyle,
         QWidget,
     )
 
@@ -37,11 +41,13 @@ except ImportError:
         QEasingCurve,
         QEvent,
         QObject,
+        QPointF,
         QPropertyAnimation,
+        QRectF,
         QTimer,
         Qt,
     )
-    from PyQt5.QtGui import QColor, QPalette
+    from PyQt5.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
     from PyQt5.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -52,7 +58,9 @@ except ImportError:
         QListWidget,
         QMenu,
         QMenuBar,
+        QProxyStyle,
         QRadioButton,
+        QStyle,
         QWidget,
     )
 
@@ -86,3 +94,20 @@ NO_DROP_SHADOW_WINDOW_HINT = (
 )
 
 EASING_OUT_CUBIC = QEasingCurve.Type.OutCubic if IS_QT6 else QEasingCurve.OutCubic
+
+# ---- QStyle：自绘 indicator 用到的枚举 ----
+PIXEL_METRIC = QStyle.PixelMetric if IS_QT6 else QStyle
+PRIMITIVE_ELEMENT = QStyle.PrimitiveElement if IS_QT6 else QStyle
+STATE_FLAG = QStyle.StateFlag if IS_QT6 else QStyle
+
+ANTIALIASING = QPainter.RenderHint.Antialiasing if IS_QT6 else QPainter.Antialiasing
+NO_PEN = Qt.PenStyle.NoPen if IS_QT6 else Qt.NoPen
+NO_BRUSH = Qt.BrushStyle.NoBrush if IS_QT6 else Qt.NoBrush
+ROUND_CAP = Qt.PenCapStyle.RoundCap if IS_QT6 else Qt.RoundCap
+ROUND_JOIN = Qt.PenJoinStyle.RoundJoin if IS_QT6 else Qt.RoundJoin
+
+# ---- sip：判断 C++ 对象是否已被 Qt 销毁（样式被 Krita 换掉时用） ----
+try:
+    from PyQt6 import sip
+except ImportError:
+    from PyQt5 import sip

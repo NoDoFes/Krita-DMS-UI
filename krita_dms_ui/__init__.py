@@ -13,7 +13,12 @@ from krita import Krita, Extension
 
 from .qt_compat import COLOR_GROUP, COLOR_ROLE, QApplication, QColor, QTimer
 from .styles import build_qss, get_theme_colors
-from .hacks import MenuFilter, inherit_app_palette, patch_welcome_page
+from .hacks import (
+    MenuFilter,
+    ensure_indicator_style,
+    inherit_app_palette,
+    patch_welcome_page,
+)
 from .menu_animation import MenuAnimator
 from .settings_ui import (
     SETTING_MENU_ANIMATION,
@@ -115,6 +120,8 @@ class DMSModernUIExtension(Extension):
         if colors is None:
             return
 
+        # 先装好自绘指示器，再上 QSS：QSS 一变就会触发全局 repolish
+        ensure_indicator_style(colors, self.app)
         self.app.setStyleSheet(build_qss(colors))
         self.sync_palette(colors)
 
@@ -195,6 +202,9 @@ class DMSModernUIExtension(Extension):
         # Krita 可能在插件启动之后才套用自己的调色板，这里补一次，
         # 保证选中态文字色不会退回 matugen 的原始 HighlightedText。
         self.sync_palette(colors)
+
+        # 样式菜单会换掉代理样式，顺便确认勾选控件仍由我们自绘
+        ensure_indicator_style(colors, self.app)
 
         for win in Krita.instance().windows():
             qwin = win.qwindow()

@@ -229,79 +229,13 @@ KisWelcomePageWidget QTextBrowser {
     border: none;
 }
 
-/* ====== 复选框（保持空心圆 / 实心圆，不做勾） ====== */
-QCheckBox::indicator,
-QTreeView::indicator,
-QListView::indicator {
-    width: 14px;
-    height: 14px;
-    border-radius: 7px;
-    border: 2px solid {{OUTLINE}};
-    background-color: transparent;
-}
-
-QCheckBox::indicator:hover,
-QTreeView::indicator:hover,
-QListView::indicator:hover {
-    border: 2px solid {{PRIMARY}};
-    background-color: {{FOCUS_BG}};
-}
-
-QCheckBox::indicator:checked,
-QTreeView::indicator:checked,
-QListView::indicator:checked {
-    background-color: {{PRIMARY}};
-    border: 2px solid {{PRIMARY}};
-}
-
-QCheckBox::indicator:disabled,
-QTreeView::indicator:disabled,
-QListView::indicator:disabled {
-    border: 2px solid {{TEXT_DISABLED}};
-    background-color: transparent;
-}
-
-QCheckBox::indicator:checked:disabled,
-QTreeView::indicator:checked:disabled,
-QListView::indicator:checked:disabled {
-    background-color: {{DISABLED_BG}};
-    border: 2px solid {{TEXT_DISABLED}};
-}
-
-/* ====== 单选按钮（圆环 + 主色圆点） ====== */
-QRadioButton::indicator {
-    width: 14px;
-    height: 14px;
-    border-radius: 7px;
-    border: 2px solid {{OUTLINE}};
-    background-color: transparent;
-}
-
-QRadioButton::indicator:hover {
-    border: 2px solid {{PRIMARY}};
-}
-
-QRadioButton::indicator:checked {
-    border: 2px solid {{PRIMARY}};
-    background: qradialgradient(
-        cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,
-        stop:0 {{PRIMARY}}, stop:0.30 {{PRIMARY}},
-        stop:0.32 rgba(0, 0, 0, 0), stop:1 rgba(0, 0, 0, 0)
-    );
-}
-
-QRadioButton::indicator:disabled {
-    border: 2px solid {{TEXT_DISABLED}};
-}
-
-QRadioButton::indicator:checked:disabled {
-    border: 2px solid {{TEXT_DISABLED}};
-    background: qradialgradient(
-        cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,
-        stop:0 {{TEXT_DISABLED}}, stop:0.30 {{TEXT_DISABLED}},
-        stop:0.32 rgba(0, 0, 0, 0), stop:1 rgba(0, 0, 0, 0)
-    );
-}
+/* ====== 复选框 / 单选按钮 ======
+   指示器由 hacks.py 的 IndicatorStyle（QProxyStyle）自绘：
+   checkbox 画 M3 圆角方形 + 勾号 / 横杠，radio 画圆环 + 圆点。
+   QSS 里不能再写 ::indicator 规则，否则会覆盖掉自绘结果。
+   这里只保留文字与间距。 */
+QCheckBox, QRadioButton { color: {{TEXT}}; spacing: 6px; }
+QCheckBox:disabled, QRadioButton:disabled { color: {{TEXT_DISABLED}}; }
 """
 
 # ---------------------------------------------------------------------------
@@ -323,6 +257,13 @@ def _rgba(color, opacity):
     return "rgba({}, {}, {}, {})".format(
         color.red(), color.green(), color.blue(), round(opacity * 255)
     )
+
+
+def _with_alpha(color, opacity):
+    """同色、指定透明度的 QColor（给 QPainter 直接使用）。"""
+    result = QColor(color)
+    result.setAlphaF(max(0.0, min(1.0, opacity)))
+    return result
 
 
 def _luminance(color):
@@ -437,6 +378,28 @@ def get_theme_colors(palette, color_role, primary=None):
     }
 
 
+def get_indicator_colors(colors):
+    """自绘勾选控件（IndicatorStyle）需要的 QColor 集合。
+
+    M3 语义：checkbox 用 primary 填充 + on-primary 勾号，radio 用 primary
+    圆环 + 圆点；禁用态降为 12% 容器 / 38% 前景区分。
+    这里把 QSS 用的字符串 token 换成 QColor，颜色推导仍留在本模块。
+    """
+    primary = QColor(colors["PRIMARY"])
+    on_surface = QColor(colors["ON_SURFACE"])
+    surface = QColor(colors["SURFACE"])
+
+    return {
+        "primary": primary,
+        "on_primary": QColor(colors["ON_PRIMARY"]),
+        "outline": QColor(colors["OUTLINE"]),
+        "hover": _with_alpha(primary, 0.08),
+        "disabled_outline": QColor(colors["TEXT_DISABLED"]),
+        "disabled_fill": _mix(on_surface, surface, 0.12),
+        "disabled_mark": QColor(colors["TEXT_DISABLED"]),
+    }
+
+
 # ---------------------------------------------------------------------------
 # 组装
 # ---------------------------------------------------------------------------
@@ -453,4 +416,9 @@ def build_qss(colors):
     return _TOKEN_RE.sub(lambda match: colors[match.group(1)], MODERN_QSS)
 
 
-__all__ = ["MODERN_QSS", "get_theme_colors", "build_qss"]
+__all__ = [
+    "MODERN_QSS",
+    "get_theme_colors",
+    "get_indicator_colors",
+    "build_qss",
+]
