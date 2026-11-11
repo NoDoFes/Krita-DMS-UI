@@ -12,7 +12,7 @@
 - **表头 / 提示气泡**：补齐 `QHeaderView`、`QTableView`、`QToolTip` 等默认控件的暗色适配。
 - **去除菜单黑边**：通过全局事件过滤器给 `QMenu` 打补丁，消除 Qt 经典黑边，保留圆角。
 - **菜单弹出动画**：菜单栏下拉按 Material You 3 的节奏做淡入过渡（可开关），不再生硬弹出。
-- **欢迎页统一风格**：重绘新建 / 打开按钮、最近文件列表和社区资源链接，去掉下划线与快捷键提示。
+- **欢迎页统一风格**：社区资源的图标与文字合并进同一个圆角行（整行可点击，hover / 按下有状态层），新建 / 打开改为 tonal 卡片；社区链接去掉下划线并加 `↗` 提示，`正在运行测试版本` 保持原有链接与下划线。
 - **DMS UI 控制台**：在菜单栏最右侧新增 `DMS UI` 菜单，可以：
   - 显示 / 隐藏任意顶部菜单项（文件、编辑、视图……）
   - 隐藏菜单栏的快捷键提示
@@ -137,7 +137,8 @@ python3 update_context.py
 - **部分控件只认调色板**：KDE 的 `KPageListViewDelegate`（配置对话框左侧栏）等自绘 delegate 不读 QSS 的 `color`，所以选中态的 `Highlight` / `HighlightedText` 由插件同步写入 `QPalette`，与 QSS 的 `primary-container` 保持一致。`KPageDialog` 在显示时还会显式套用当前应用调色板，并单独校正侧栏 `KPageListView`，避免从画布窗口继承到 matugen 的深色选中文字。
 - **勾选控件是 M3 自绘**：QSS 画不出勾号和圆点，所以 `hacks.py` 里用 `QProxyStyle`（`IndicatorStyle`）绘制——checkbox 是圆角方形，选中为 `primary` 填充 + `on-primary` 勾号，不确定态画横杠；radio 是圆环 + 圆点，选中用 `primary`；`QTreeView` / `QListView` 的勾选复用同一套画法，尺寸小一号。颜色取自 `styles.get_indicator_colors()`，跟随主题切换，不引入 SVG / PNG。注意：Krita 的「样式」菜单会调用 `QApplication.setStyle()` 换掉代理样式，插件会在刷新 / 新窗口时自动重新包裹。
 - **SpinBox 上下箭头来自 SVG 素材库**：`assets/icons/` 的模板由 `icons.py` 按当前主题色渲染到用户缓存目录，QSS 用 `image: url(...)` 引用，浅色 / 深色与禁用态都跟随调色板，不引入 PNG。**ComboBox 下拉箭头暂未绘制**，后续复用同一套素材补齐。
-- **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页只在颜色变化时重绘，避免重复 `polish`。
+- **欢迎页改写方式**：社区资源的每行合成一个 `QToolButton`（图标 + 文字），原来的图标按钮和链接标签只隐藏、不销毁，Krita 的 `retranslateUi` / 主题刷新仍能安全写入；样式只在字符串变化时重设，避免重复 `polish`。`devBuildLabel`（正在运行测试版本）完全不动，保留它自己的链接与下划线。
+- **低开销优先**：QSS token 单次遍历替换，菜单文字色按调色板缓存，欢迎页样式先比较再写入，避免重复 `polish`。
 - **菜单动画为最小实现**：目前只有顶栏下拉的淡入（200ms），不含位移 / 缩放 / 退出动画。动画使用 `QGraphicsOpacityEffect`（客户端渲染），在 Wayland 下同样生效；不想用时可在 `DMS UI → 菜单弹出动画` 关闭。
 - **Qt 版本兼容**：PyQt5 / PyQt6 的枚举差异统一由 `qt_compat.py` 处理，新增代码请从这里导入 Qt 类和常量，不要再写裸 `QEvent.Type` / `Qt.WindowType`。
 - **Qt QSS 不支持 `!important`**：写自定义样式时请用选择器优先级和书写顺序来控制覆盖关系，不要依赖 `!important`。

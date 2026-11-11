@@ -12,6 +12,7 @@
 """
 
 import re
+from html import unescape
 
 from .qt_compat import (
     ANTIALIASING,
@@ -21,10 +22,12 @@ from .qt_compat import (
     NO_DROP_SHADOW_WINDOW_HINT,
     NO_PEN,
     PIXEL_METRIC,
+    POINTING_HAND,
     POLISH_EVENT,
     PRIMITIVE_ELEMENT,
     QApplication,
     QCheckBox,
+    QDesktopServices,
     QDialog,
     QLabel,
     QListView,
@@ -37,12 +40,16 @@ from .qt_compat import (
     QProxyStyle,
     QRadioButton,
     QRectF,
+    QSize,
+    QToolButton,
+    QUrl,
     ROUND_CAP,
     ROUND_JOIN,
     SHOW_EVENT,
+    SIZE_POLICY,
     STATE_FLAG,
-    WA_HOVER,
-    WA_STYLED_BACKGROUND,
+    STRONG_FOCUS,
+    TEXT_BESIDE_ICON,
     WA_TRANSLUCENT_BACKGROUND,
     QWidget,
     sip,
@@ -94,125 +101,254 @@ def _selection_drifted(widget, palette):
     )
 
 
-def _welcome_signature(colors):
-    """欢迎页补丁的缓存键：覆盖所有会用到的颜色。"""
-    keys = (
-        "ITEM_BG",
-        "SURFACE_CONTAINER_HIGH",
-        "SURFACE_CONTAINER_HIGHEST",
-        "TEXT",
-        "HOVER_BG",
-        "PRIMARY_CONTAINER",
-        "ON_PRIMARY_CONTAINER",
-    )
-    return "|".join(colors[key] for key in keys)
+_LINK_RE = re.compile(r'<a\b[^>]*href="([^"]*)"[^>]*>(.*?)</a>', re.DOTALL)
+_TAG_RE = re.compile(r"<[^>]+>")
+
+# 社区资源：图标按钮与链接标签成对出现（名字来自 KisWelcomePage.ui）
+_WELCOME_ROWS = (
+    ("userManualIcon", "manualLink"),
+    ("supportKritaIcon", "supportKritaLink"),
+    ("kdeIcon", "poweredByKDELink"),
+    ("sourceCodeIcon", "sourceCodeLink"),
+    ("gettingStartedIcon", "gettingStartedLink"),
+    ("userCommunityIcon", "userCommunityLink"),
+    ("kritaWebsiteIcon", "kritaWebsiteLink"),
+)
+
+# Krita 会往这些标题里写自己的混合色，这里统一换回 on-surface
+_WELCOME_TITLES = (
+    "startTitleLabel",
+    "helpTitleLabel",
+    "recentDocumentsLabel",
+    "newsTitleLabel",
+)
+
+
+def _link_parts(html):
+    """从 Krita 生成的 ``<a href=...>文字</a>`` 中取出地址和纯文字。"""
+    html = html or ""
+    match = _LINK_RE.search(html)
+    if match is None:
+        return "", _TAG_RE.sub("", html).strip()
+    text = unescape(_TAG_RE.sub("", match.group(2))).strip()
+    return match.group(1), text
+
+
+def _row_layout(widget):
+    """找到直接容纳 ``widget`` 的那个布局。
+
+    社区资源每一行是 ``QHBoxLayout``：图标按钮和链接标签是两个 item，
+    没有包裹用的 QWidget。从父控件的布局往下递归，找到真正持有它的那个。
+    """
+    parent = widget.parentWidget()
+    if parent is None:
+        return None
+
+    def search(layout):
+        if layout is None:
+            return None
+        if layout.indexOf(widget) >= 0:
+            return layout
+        for index in range(layout.count()):
+            found = search(layout.itemAt(index).layout())
+            if found is not None:
+                return found
+        return None
+
+    return search(parent.layout())
+
+
+def _open_welcome_link(button):
+    """点击整行时用系统默认程序打开当前 href。"""
+    url = button.property("dmsHref")
+    if url:
+        QDesktopServices.openUrl(QUrl(url))
+
+
+def _restyle(widget, qss):
+    """只在样式真正变化时写入，避免反复 polish 整个欢迎页。
+
+    比较控件当前样式表，而不是记在 property 里：Krita 的
+    ``slotUpdateThemeColors()`` 会用自己的混合色覆盖 ``newFileLink`` 等
+    控件的样式，直接对比才能在下一次补丁时重新夺回控制权。
+    """
+    if widget.styleSheet() == qss:
+        return
+    widget.setStyleSheet(qss)
 
 
 def patch_welcome_page(qwin, colors):
-    """修复 Krita 欢迎页 C++ 写死的样式"""
-    signature = _welcome_signature(colors)
-    if qwin.property("dms_welcome_signature") == signature:
-        return
-    qwin.setProperty("dms_welcome_signature", signature)
+    """把 Krita 欢迎页改成统一的 M3 行式交互。
 
-    new_file_btn = qwin.findChild(QWidget, "newFileLink")
-    open_file_btn = qwin.findChild(QWidget, "openFileLink")
-    recent_list = qwin.findChild(QListWidget, "recentDocumentsListView")
+    - 社区资源：每行合成一个 ``QToolButton``（图标 + 文字），整行可点击，
+      hover / 按下都有状态层，不再有下划线。原来的图标按钮和链接标签
+      只隐藏、不销毁，Krita 更新文字或图标时不会崩。
+    - 开始创作：两张 tonal 卡片，图标缩到 28px，去掉下划线。
+    - ``devBuildLabel`` 保持 Krita 原样（“正在运行测试版本”的链接与下划线不动）。
+    """
+    row_qss = f"""
+        QToolButton {{
+            background-color: {colors['ITEM_BG']};
+            color: {colors['TEXT']};
+            border: none;
+            border-radius: 8px;
+            padding: 5px 14px 5px 8px;
+        }}
+        QToolButton:hover {{ background-color: {colors['ACTIVE_BG']}; }}
+        QToolButton:pressed {{
+            background-color: {colors['PRIMARY_CONTAINER']};
+            color: {colors['ON_PRIMARY_CONTAINER']};
+        }}
+        QToolButton:focus {{ background-color: {colors['FOCUS_BG']}; }}
+    """
+    file_qss = f"""
+        QToolButton {{
+            background-color: {colors['SURFACE_CONTAINER_HIGH']};
+            color: {colors['TEXT']};
+            border: none;
+            border-radius: 12px;
+            padding: 10px 18px 10px 12px;
+        }}
+        QToolButton:hover {{ background-color: {colors['SURFACE_CONTAINER_HIGHEST']}; }}
+        QToolButton:pressed {{
+            background-color: {colors['PRIMARY_CONTAINER']};
+            color: {colors['ON_PRIMARY_CONTAINER']};
+        }}
+        QToolButton:focus {{ background-color: {colors['FOCUS_BG']}; }}
+    """
 
-    if new_file_btn or open_file_btn:
-        btn_qss = f"""
-            QWidget {{
-                background-color: {colors['SURFACE_CONTAINER_HIGH']};
-                border-radius: 6px;
-                color: {colors['TEXT']};
-                padding: 8px 12px;
+    for icon_name, label_name in _WELCOME_ROWS:
+        icon = qwin.findChild(QWidget, icon_name)
+        label = qwin.findChild(QLabel, label_name)
+        if icon is None or label is None:
+            continue
+
+        href, text = _link_parts(label.text())
+        button = qwin.findChild(QToolButton, "dmsRow_" + icon_name)
+
+        if button is None:
+            layout = _row_layout(icon)
+            if layout is None:
+                continue
+            # 先记录可见性：接下来我们就把原控件藏起来了
+            visible = not icon.isHidden() and not label.isHidden()
+            button = QToolButton(qwin)
+            button.setObjectName("dmsRow_" + icon_name)
+            button.setToolButtonStyle(TEXT_BESIDE_ICON)
+            button.setCursor(POINTING_HAND)
+            button.setFocusPolicy(STRONG_FOCUS)
+            button.setSizePolicy(SIZE_POLICY.Minimum, SIZE_POLICY.Fixed)
+            button.setIconSize(QSize(24, 24))
+            button.setVisible(visible)
+            button.clicked.connect(lambda _=False, b=button: _open_welcome_link(b))
+            layout.insertWidget(layout.indexOf(icon), button)
+            # 原控件保留在对象树里，Krita 的 retranslate / 图标更新还能写它们
+            layout.removeWidget(icon)
+            layout.removeWidget(label)
+            icon.hide()
+            label.hide()
+
+        button.setProperty("dmsHref", href)
+        # 末尾的 ↗ 是“会在浏览器里打开”的固定提示，不依赖 hover
+        button.setText(text.replace("&", "&&") + "  ↗")
+        button.setToolTip(href)
+        button.setAccessibleName(text)
+        button.setIcon(icon.icon())
+        _restyle(button, row_qss)
+
+    for name, shortcut_name in (
+        ("newFileLink", "newFileLinkShortcut"),
+        ("openFileLink", "openFileShortcut"),
+    ):
+        button = qwin.findChild(QToolButton, name)
+        if button is None:
+            continue
+        button.setIconSize(QSize(28, 28))
+        font = button.font()
+        font.setUnderline(False)
+        button.setFont(font)
+        _restyle(button, file_qss)
+
+        # 快捷键提示保留下来，正好当作“可以打开本地文件”的线索
+        shortcut = qwin.findChild(QLabel, shortcut_name)
+        if shortcut is not None:
+            _restyle(
+                shortcut,
+                f"color: {colors['ON_SURFACE_VARIANT']}; background: transparent;",
+            )
+
+    for name in _WELCOME_TITLES:
+        title = qwin.findChild(QLabel, name)
+        if title is not None:
+            _restyle(title, f"color: {colors['TEXT']}; background: transparent;")
+
+    clear_button = qwin.findChild(QWidget, "clearRecentFilesLink")
+    if clear_button is not None:
+        _restyle(
+            clear_button,
+            f"""
+            QPushButton {{
+                background: transparent;
+                color: {colors['PRIMARY']};
+                border: none;
+                border-radius: 8px;
+                padding: 4px 10px;
             }}
-            QWidget:hover {{ background-color: {colors['SURFACE_CONTAINER_HIGHEST']}; }}
-            QWidget:pressed {{ background-color: {colors['PRIMARY_CONTAINER']}; color: {colors['ON_PRIMARY_CONTAINER']}; }}
-        """
-        for btn in [new_file_btn, open_file_btn]:
-            if btn:
-                btn.setStyleSheet(btn_qss)
-                for lbl in btn.findChildren(QLabel):
-                    text = lbl.text()
-                    if not text: continue
-                    if "Ctrl" in text or "Alt" in text:
-                        lbl.hide()
-                        lbl.setFixedWidth(0)
-                        continue
-                    clean_text = re.sub(r'\s*[\(（][^\)）]*[\)）]$', '', text).strip()
-                    if text != clean_text:
-                        lbl.setText(clean_text)
-                    lbl.setStyleSheet(f"text-decoration: none; color: {colors['TEXT']}; background: transparent;")
+            QPushButton:hover {{ background-color: {colors['HOVER_BG']}; }}
+            QPushButton:pressed {{
+                background-color: {colors['PRIMARY_CONTAINER']};
+                color: {colors['ON_PRIMARY_CONTAINER']};
+            }}
+            """,
+        )
 
-    if recent_list:
-        recent_list.setStyleSheet(f"""
+    news_options = qwin.findChild(QToolButton, "btnNewsOptions")
+    if news_options is not None:
+        _restyle(
+            news_options,
+            f"""
+            QToolButton {{
+                background: transparent;
+                border: none;
+                border-radius: 8px;
+                padding: 4px;
+            }}
+            QToolButton:hover {{ background-color: {colors['HOVER_BG']}; }}
+            QToolButton:pressed {{
+                background-color: {colors['PRIMARY_CONTAINER']};
+            }}
+            """,
+        )
+
+    # 最近图像 / 最新资讯两块面板：统一成 M3 细描边
+    for name in ("recentDocsStackedWidget", "newsFrame"):
+        frame = qwin.findChild(QWidget, name)
+        if frame is not None:
+            _restyle(
+                frame,
+                f"#{name} {{ border: 1px solid {colors['OUTLINE_VARIANT']};"
+                f" border-radius: 12px; background: transparent; }}",
+            )
+
+    recent_list = qwin.findChild(QListWidget, "recentDocumentsListView")
+    if recent_list is not None:
+        _restyle(
+            recent_list,
+            f"""
             QListWidget {{ background: transparent; border: none; }}
-            QListWidget::item {{ color: {colors['TEXT']}; border-radius: 6px; padding: 2px; }}
+            QListWidget::item {{
+                color: {colors['TEXT']};
+                border-radius: 6px;
+                padding: 2px;
+            }}
             QListWidget::item:hover {{ background-color: {colors['HOVER_BG']}; }}
-            QListWidget::item:selected {{ background-color: {colors['PRIMARY_CONTAINER']}; color: {colors['ON_PRIMARY_CONTAINER']}; }}
-        """)
+            QListWidget::item:selected {{
+                background-color: {colors['PRIMARY_CONTAINER']};
+                color: {colors['ON_PRIMARY_CONTAINER']};
+            }}
+            """,
+        )
 
-    keywords = ["使用手册", "捐款支持", "KDE 社区", "源代码库", "新手入门", "用户社区", "官方网站"]
-    for widget in qwin.findChildren(QWidget):
-        try:
-            if not widget.isVisible(): continue
-            text = ""
-            if hasattr(widget, "text") and callable(widget.text):
-                text = widget.text()
-
-            if text and any(kw in text for kw in keywords):
-                if widget.property("dms_link_signature") == signature:
-                    continue
-                widget.setProperty("dms_link_signature", signature)
-
-                clean_text = re.sub(r'<a[^>]*>(.*?)</a>', r'\1', text, flags=re.DOTALL)
-                clean_text = re.sub(r'<style.*?</style>', '', clean_text, flags=re.DOTALL)
-
-                if hasattr(widget, "setText") and widget.text() != clean_text:
-                    widget.setText(clean_text)
-
-                widget.setAttribute(WA_HOVER, True)
-
-                widget.setStyleSheet(f"""
-                    QLabel {{
-                        background-color: {colors['ITEM_BG']};
-                        border-radius: 6px;
-                        padding: 6px 12px;
-                        margin: 2px 0px;
-                        color: {colors['TEXT']};
-                    }}
-                    QLabel:hover {{
-                        background-color: {colors['HOVER_BG']};
-                    }}
-                """)
-
-                parent = widget.parentWidget()
-                while parent and parent != qwin:
-                    # 【核心修复】限制最大宽度和高度，防止涂色到整个左侧大容器
-                    if 100 < parent.width() < 350 and 25 < parent.height() < 60:
-                        parent.setAttribute(WA_STYLED_BACKGROUND, True)
-
-                        parent.setStyleSheet(f"""
-                            QWidget {{
-                                background-color: {colors['ITEM_BG']};
-                                border-radius: 6px;
-                                padding: 4px 8px;
-                                margin: 2px 0px;
-                            }}
-                            QWidget:hover {{
-                                background-color: {colors['HOVER_BG']};
-                            }}
-                            QLabel {{
-                                background: transparent;
-                                color: {colors['TEXT']};
-                                text-decoration: none;
-                            }}
-                        """)
-                        break
-                    parent = parent.parentWidget()
-        except Exception:
-            pass
 
 class MenuFilter(QObject):
     """全局事件过滤器：去黑边 + 修复内嵌菜单文字 + 配置对话框调色板。
