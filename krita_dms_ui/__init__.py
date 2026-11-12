@@ -9,6 +9,8 @@
 设置菜单在 ``settings_ui.py``，动画在 ``menu_animation.py``。
 """
 
+__version__ = "0.1.0"
+
 from krita import Extension, Krita
 
 from .hacks import (
