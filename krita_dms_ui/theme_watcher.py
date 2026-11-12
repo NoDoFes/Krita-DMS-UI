@@ -14,13 +14,13 @@ from pathlib import Path
 from .qt_compat import (
     COLOR_GROUP,
     COLOR_ROLE,
+    STANDARD_PATH,
     QColor,
     QFileSystemWatcher,
     QObject,
     QPalette,
     QStandardPaths,
     QTimer,
-    STANDARD_PATH,
 )
 
 _DEBOUNCE_MS = 300

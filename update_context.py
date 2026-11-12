@@ -1,7 +1,7 @@
+#!/usr/bin/env python3
 import os
 import shutil
 from pathlib import Path
-from collections import defaultdict
 
 # ================= 配置区 =================
 ROOT_DIR = Path(__file__).parent.resolve()
@@ -108,7 +108,8 @@ def generate_index_md(mappings):
             # 处理路径
             rel_path_obj = Path(rel_path)
             dir_name = str(rel_path_obj.parent)
-            if dir_name == '.': dir_name = ""
+            if dir_name == ".":
+                dir_name = ""
             
             if dir_name != current_dir:
                 if dir_name:

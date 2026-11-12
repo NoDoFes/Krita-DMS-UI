@@ -17,6 +17,11 @@ from .qt_compat import (
     POLISH_EVENT,
     POPUP_WINDOW,
     SHOW_EVENT,
+    SMOOTH_PIXMAP,
+    STANDARD_PATH,
+    TOOLTIP_WINDOW,
+    WA_NO_SYSTEM_BACKGROUND,
+    WA_TRANSPARENT_FOR_MOUSE,
     QEasingCurve,
     QGraphicsOpacityEffect,
     QLabel,
@@ -29,11 +34,6 @@ from .qt_compat import (
     QRect,
     QStandardPaths,
     QWidget,
-    SMOOTH_PIXMAP,
-    STANDARD_PATH,
-    TOOLTIP_WINDOW,
-    WA_NO_SYSTEM_BACKGROUND,
-    WA_TRANSPARENT_FOR_MOUSE,
 )
 
 # DMS 的默认值：settings.json 只保存被改过的键
@@ -62,14 +62,14 @@ class Motion:
     """一次读取得到的动效参数（单位：毫秒）。"""
 
     __slots__ = (
-        "enabled",
-        "reduce_motion",
-        "popup_duration",
-        "effects_duration",
-        "spatial_duration",
         "effects_curve",
-        "spatial_curve",
+        "effects_duration",
+        "enabled",
+        "popup_duration",
+        "reduce_motion",
         "source",
+        "spatial_curve",
+        "spatial_duration",
     )
 
     def __init__(
@@ -96,7 +96,7 @@ class Motion:
 def _load_json(path):
     """读 DMS 设置；文件缺失或解析失败返回 None（走 KDE / 默认值）。"""
     try:
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
         return None

@@ -10,7 +10,7 @@ token 渲染成真实文件，再由 QSS 用 ``image: url(...)`` 引用。
 
 from pathlib import Path
 
-from .qt_compat import QStandardPaths, STANDARD_PATH
+from .qt_compat import STANDARD_PATH, QStandardPaths
 
 _TEMPLATE_DIR = Path(__file__).with_name("assets") / "icons"
 _cache_root = QStandardPaths.writableLocation(STANDARD_PATH.CacheLocation)
@@ -80,7 +80,7 @@ def prepare_icons(colors):
             tokens[token] = "none"
             continue
         keep.add(path.name)
-        tokens[token] = 'url("{}")'.format(path.as_posix())
+        tokens[token] = f'url("{path.as_posix()}")'
 
     _drop_stale(keep)
     return tokens

@@ -9,11 +9,8 @@
 设置菜单在 ``settings_ui.py``，动画在 ``menu_animation.py``。
 """
 
-from krita import Krita, Extension
+from krita import Extension, Krita
 
-from .qt_compat import COLOR_GROUP, COLOR_ROLE, QApplication, QColor, QTimer
-from .icons import prepare_icons
-from .styles import build_qss, get_theme_colors
 from .hacks import (
     MenuFilter,
     ensure_indicator_style,
@@ -21,8 +18,9 @@ from .hacks import (
     patch_angle_spinbox,
     patch_welcome_page,
 )
+from .icons import prepare_icons
 from .menu_animation import MenuAnimator
-from .theme_watcher import ThemeWatcher
+from .qt_compat import COLOR_GROUP, COLOR_ROLE, QApplication, QColor, QTimer
 from .settings_ui import (
     SETTING_MENU_ANIMATION,
     apply_menu_text_settings,
@@ -30,6 +28,8 @@ from .settings_ui import (
     read_bool_setting,
     setup_ui_settings,
 )
+from .styles import build_qss, get_theme_colors
+from .theme_watcher import ThemeWatcher
 
 
 class DMSModernUIExtension(Extension):

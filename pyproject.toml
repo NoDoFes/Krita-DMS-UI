@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+exclude = [".git", "__pycache__", "ai_context_bundle", ".ruff_cache"]
+
+[tool.ruff.lint]
+# 保持简单：只查语法错误、未使用导入和 import 顺序
+select = ["E", "F", "I", "UP"]
+# QSS 模板里有不少长行，不强制折行
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# PyQt5 兼容分支是 re-export，静态检查会误报 F401
+"krita_dms_ui/qt_compat.py" = ["F401"]

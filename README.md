@@ -3,6 +3,8 @@
 一个轻量的 PyKrita 界面插件：用纯 QSS + 少量 Python 补丁，给 Krita 换上圆角、低对比度的现代界面，并跟随系统 / Krita 主题调色板自动取色。
 
 > 不修改 Krita 源码，不依赖外部 QSS 加载器，不需要额外安装任何包。
+>
+> 基于 [Krita-MorandiUI](https://github.com/LanRhyme/Krita-MorandiUI) 继续改的，配色接的是 DankMaterialShell / matugen 的 Material You 调色板。
 
 ## ✨ 特性
 
@@ -99,6 +101,8 @@ Krita_dmsUI/
 │   └── settings_ui.py    # DMS UI 菜单、设置键、菜单显隐与快捷键提示
 ├── krita_dms_ui.desktop   # Krita 插件声明
 ├── update_context.py      # 开发辅助：打包扁平化上下文供 AI 使用
+├── pyproject.toml         # ruff 检查配置
+├── LICENSE                # GPL-3.0
 └── README.md
 ```
 
@@ -126,6 +130,9 @@ python3 -m py_compile krita_dms_ui/*.py
 
 # 生成 AI 上下文包（输出到 ai_context_bundle/，已被 .gitignore 忽略）
 python3 update_context.py
+
+# 代码检查
+uvx ruff check .
 ```
 
 调试时打开 Krita 的 **Python 控制台**（`工具 → Python 控制台` 或 `Tools → Python Console`）可以看到插件报错。
@@ -151,6 +158,14 @@ python3 update_context.py
 
 删除 `pykrita/` 下的 `krita_dms_ui/` 文件夹和 `krita_dms_ui.desktop` 文件，重启 Krita 即可。
 
-## 📄 License
+## 📄 来源与许可
 
-本项目尚未声明开源许可证。如需分发或二次发布，建议先补充一个 `LICENSE` 文件。
+这个项目不是从零写的，是在 [Krita-MorandiUI](https://github.com/LanRhyme/Krita-MorandiUI) 的基础上继续做的：配色改成 DankMaterialShell / matugen 的 Material You 调色板，并补了菜单、勾选控件、欢迎页、菜单动画等细节。
+
+Krita-MorandiUI 又基于 2020 年的 **Krita UI Redesign**：
+
+- 原作者：Kapyia、Pedro Reis
+- Copyright (C) 2020
+- 许可证：GNU General Public License v3
+
+所以本项目也按 **GPL-3.0** 分发，详见 [LICENSE](LICENSE)。谢谢上面这些作者。

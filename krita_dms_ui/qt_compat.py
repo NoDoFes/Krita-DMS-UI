@@ -20,9 +20,9 @@ try:
         QRectF,
         QSize,
         QStandardPaths,
+        Qt,
         QTimer,
         QUrl,
-        Qt,
     )
     from PyQt6.QtGui import (
         QColor,
@@ -65,9 +65,9 @@ except ImportError:
         QRectF,
         QSize,
         QStandardPaths,
+        Qt,
         QTimer,
         QUrl,
-        Qt,
     )
     from PyQt5.QtGui import (
         QColor,
@@ -110,10 +110,6 @@ POLISH_EVENT = QEvent.Type.Polish if IS_QT6 else QEvent.Polish
 SHOW_EVENT = QEvent.Type.Show if IS_QT6 else QEvent.Show
 HIDE_EVENT = QEvent.Type.Hide if IS_QT6 else QEvent.Hide
 
-WA_HOVER = Qt.WidgetAttribute.WA_Hover if IS_QT6 else Qt.WA_Hover
-WA_STYLED_BACKGROUND = (
-    Qt.WidgetAttribute.WA_StyledBackground if IS_QT6 else Qt.WA_StyledBackground
-)
 WA_TRANSLUCENT_BACKGROUND = (
     Qt.WidgetAttribute.WA_TranslucentBackground
     if IS_QT6
@@ -137,7 +133,6 @@ NO_DROP_SHADOW_WINDOW_HINT = (
     Qt.WindowType.NoDropShadowWindowHint if IS_QT6 else Qt.NoDropShadowWindowHint
 )
 
-EASING_OUT_CUBIC = QEasingCurve.Type.OutCubic if IS_QT6 else QEasingCurve.OutCubic
 EASING_BEZIER = QEasingCurve.Type.BezierSpline if IS_QT6 else QEasingCurve.BezierSpline
 
 TOOLTIP_WINDOW = Qt.WindowType.ToolTip if IS_QT6 else Qt.ToolTip

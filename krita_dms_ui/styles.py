@@ -281,9 +281,7 @@ def _mix(fg, bg, weight):
 
 def _rgba(color, opacity):
     """QSS 用的 rgba 字符串；Qt 的 alpha 是 0-255。"""
-    return "rgba({}, {}, {}, {})".format(
-        color.red(), color.green(), color.blue(), round(opacity * 255)
-    )
+    return f"rgba({color.red()}, {color.green()}, {color.blue()}, {round(opacity * 255)})"
 
 
 def _with_alpha(color, opacity):
@@ -449,7 +447,7 @@ def build_qss(colors, icons=None):
 
 __all__ = [
     "MODERN_QSS",
-    "get_theme_colors",
-    "get_indicator_colors",
     "build_qss",
+    "get_indicator_colors",
+    "get_theme_colors",
 ]
