@@ -1,5 +1,13 @@
 # 更新记录
 
+## v0.1.2 - 2026-11-12
+
+- 修复切换到非 Dank Shell 主题时崩溃
+- 修复图层改名编辑器和原图层名错位 / 重影
+- 热重载只处理用户目录的 matugen 配色，内置主题交给 Krita
+
+安装：解压后把 `krita_dms_ui/` 和 `krita_dms_ui.desktop` 放到 Krita 的 `pykrita/` 目录，重启 Krita。
+
 ## v0.1.1 - 2026-11-12
 
 - README / manual 增加两张界面示例图

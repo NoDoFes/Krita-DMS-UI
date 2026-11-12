@@ -14,6 +14,8 @@
 import re
 from html import unescape
 
+from krita import Krita
+
 from .qt_compat import (
     ANTIALIASING,
     COLOR_ROLE,
@@ -243,11 +245,18 @@ def patch_welcome_page(qwin, colors):
             button.setVisible(visible)
             button.clicked.connect(lambda _=False, b=button: _open_welcome_link(b))
             layout.insertWidget(layout.indexOf(icon), button)
-            # 原控件保留在对象树里，Krita 的 retranslate / 图标更新还能写它们
-            layout.removeWidget(icon)
-            layout.removeWidget(label)
+            # 不 removeWidget：hide 之后布局会自动跳过这两个 item，
+            # 原控件继续留在对象树里，Krita 的 retranslate / 主题刷新
+            # 还能安全地写它们的文字和图标。
             icon.hide()
             label.hide()
+
+            # 额外持有 Python 引用，保证包装对象不会被提前回收。
+            keep = getattr(qwin, "_dms_welcome_keep", None)
+            if keep is None:
+                keep = {}
+                qwin._dms_welcome_keep = keep
+            keep[icon_name] = (icon, label, button)
 
         button.setProperty("dmsHref", href)
         # 末尾的 ↗ 是“会在浏览器里打开”的固定提示，不依赖 hover
@@ -349,6 +358,43 @@ def patch_welcome_page(qwin, colors):
             }}
             """,
         )
+
+
+def _layer_editor_padding():
+    """图层名编辑器左侧要空出的宽度（缩略图 + 装饰区 + 文字边距）。"""
+    try:
+        size = int(Krita.instance().readSetting("", "layerThumbnailSize", "20"))
+    except (TypeError, ValueError):
+        size = 30
+    return max(20, size + 25)
+
+
+def patch_layer_editor(qwin, colors):
+    """让图层重命名编辑器和原图层名对齐。
+
+    Krita 的 NodeDelegate 会把编辑器铺满整个名称列（含缩略图），
+    默认 QLineEdit 从最左边开始写字，于是和缩略图右侧的图层名错位；
+    我们的全局 QSS 又让编辑器背景半透明，原文字会透出来变成“两层”。
+    这里只给 NodeView 的 viewport 设一条局部样式：不透明背景 +
+    左侧 padding，编辑器就盖住原文字并对齐到原图层名的位置。
+    """
+    padding = _layer_editor_padding()
+    qss = f"""
+        QLineEdit {{
+            background-color: {colors['SURFACE_CONTAINER_HIGH']};
+            color: {colors['TEXT']};
+            border: 1px solid {colors['PRIMARY']};
+            border-radius: 4px;
+            padding: 2px 4px 2px {padding}px;
+            selection-background-color: {colors['SELECT_BG']};
+            selection-color: {colors['HIGHLIGHT_TEXT']};
+        }}
+    """
+    for view in qwin.findChildren(QWidget):
+        if not view.inherits("NodeView"):
+            continue
+        if view.styleSheet() != qss:
+            view.setStyleSheet(qss)
 
 
 def patch_angle_spinbox(qwin):

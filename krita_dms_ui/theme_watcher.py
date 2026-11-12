@@ -233,6 +233,19 @@ def _scheme_map(dirs):
     return result
 
 
+def _is_hot_reload_theme(path):
+    """只处理用户目录里生成的配色（matugen/DMS）；内置主题交给 Krita 自己。"""
+    base = QStandardPaths.writableLocation(STANDARD_PATH.GenericDataLocation)
+    if not base:
+        return False
+    user_dir = (Path(base) / "color-schemes").resolve()
+    try:
+        Path(path).resolve().relative_to(user_dir)
+    except ValueError:
+        return False
+    return True
+
+
 def _signature(path, palette):
     colors = tuple(palette.color(COLOR_GROUP.Active, role).rgba() for role in _SIGNATURE_ROLES)
     return (str(path),) + colors
@@ -316,7 +329,7 @@ class ThemeWatcher(QObject):
             return None
 
         path = _scheme_map(_scheme_dirs()).get(theme)
-        if path is None:
+        if path is None or not _is_hot_reload_theme(path):
             return None
 
         palette = read_palette(path, self.app.palette())

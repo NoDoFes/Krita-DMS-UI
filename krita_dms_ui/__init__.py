@@ -9,7 +9,7 @@
 设置菜单在 ``settings_ui.py``，动画在 ``menu_animation.py``。
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from krita import Extension, Krita
 
@@ -18,6 +18,7 @@ from .hacks import (
     ensure_indicator_style,
     inherit_app_palette,
     patch_angle_spinbox,
+    patch_layer_editor,
     patch_welcome_page,
 )
 from .icons import prepare_icons
@@ -48,6 +49,11 @@ class DMSModernUIExtension(Extension):
         # 最近一次写入后的完整调色板签名，用于识别外部重放
         self._applied_signature = None
         self._syncing_palette = False
+        # 调色板变化后稍等一下再重载，避开菜单 / 对话框正在关闭的时机
+        self._refresh_timer = QTimer()
+        self._refresh_timer.setSingleShot(True)
+        self._refresh_timer.setInterval(120)
+        self._refresh_timer.timeout.connect(self._resync_if_source_changed)
 
     def setup(self):
         pass
@@ -147,6 +153,12 @@ class DMSModernUIExtension(Extension):
         # 此时对话框控件刚销毁、菜单刚重建，缓存里可能留下悬空指针，
         # 导致段错误。内容相同就跳过，既避免崩溃也少一次全量 repolish。
         if self.app.styleSheet() != qss:
+            # 直接在已有样式表上 setStyleSheet 会走 QStyleSheetStyle::repolish(qApp)，
+            # 遍历全局 styleRulesCache。切换 Krita 主题时缓存里可能有正在销毁
+            # 的菜单 / 对话框控件，会在 Qt 内部踩到悬空指针直接段错误。
+            # 先清空再设置，走 setStyle 的重建路径，避开全局 repolish。
+            self.app.setStyleSheet("")
+            ensure_indicator_style(colors, self.app)
             self.app.setStyleSheet(qss)
 
         self.sync_palette(colors)
@@ -204,11 +216,17 @@ class DMSModernUIExtension(Extension):
     def _on_app_palette_changed(self, _palette):
         """外部（matugen / Krita）重新注入调色板后，异步对齐一次。"""
         if not self._syncing_palette:
-            QTimer.singleShot(0, self._resync_if_source_changed)
+            self._refresh_timer.start()
 
     def _resync_if_source_changed(self):
         """调色板任何一项被外部改写就重载；自己写入的值不会触发。"""
         if self.app is None:
+            return
+
+        # 切换主题时菜单还在关闭、对话框可能正在销毁，等它们处理完再重载，
+        # 避免在全量 polish 时碰到半销毁的控件。
+        if self.app.activePopupWidget() is not None or self.app.activeModalWidget() is not None:
+            self._refresh_timer.start()
             return
 
         if self._palette_signature() != self._applied_signature:
@@ -240,6 +258,7 @@ class DMSModernUIExtension(Extension):
             qwin = win.qwindow()
             patch_welcome_page(qwin, colors)
             patch_angle_spinbox(qwin)
+            patch_layer_editor(qwin, colors)
             apply_menu_text_settings(qwin)
             apply_menu_visibility_settings(qwin)
 
