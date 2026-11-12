@@ -34,7 +34,7 @@ Krita-DMS-UI / DMS Modern UI（本项目）
 
 ![主界面](krita_dms_ui/assets/examples/main.png)
 
-菜单 / 动画：
+菜单：
 
 ![菜单](krita_dms_ui/assets/examples/menu.png)
 
