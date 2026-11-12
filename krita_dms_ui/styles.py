@@ -17,11 +17,11 @@ MODERN_QSS = """
 /* ================== DMS Material You 主题 ================== */
 
 /* ====== 顶部菜单栏 ====== */
-QMenuBar { background-color: {{BG}}; border: none; padding: 4px 8px; }
+QMenuBar { background-color: {{BG}}; border: none; padding: 4px 2px; spacing: 0px; }
 QMenuBar::item {
     background-color: transparent;
-    padding: 6px 14px;
-    margin: 2px 4px;
+    padding: 6px 12px;
+    margin: 2px 3px;
     border-radius: 6px;
     color: {{TEXT}};
 }
