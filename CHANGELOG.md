@@ -9,6 +9,6 @@
 - 监听 `.colors` 热重载，换壁纸后不用重启
 - 菜单、子菜单、右键菜单、ComboBox、tooltip 淡入淡出
 - 菜单栏左对齐、SpinBox 箭头 SVG、欢迎页整理
-- 补充来源说明和 GPL-3.0 许可证
+- 补充来源说明和 GPL-3.0 许可证，插件管理器内置 manual.html
 
 已知问题见 README。

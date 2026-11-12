@@ -2,5 +2,7 @@
 Type=Service
 ServiceTypes=Krita/PythonPlugin
 X-KDE-Library=krita_dms_ui
+X-Python-2-Compatible=false
 Name=DMS Modern UI
-Comment=A lightweight UI plugin for dynamic themes and rounded corners.
+Comment=跟随 DankMaterialShell / matugen 的 Krita Material You 界面插件
+X-Krita-Manual=manual.html

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>DMS Modern UI for Krita Manual</title>
+</head>
+<body>
+    <h1>DMS Modern UI for Krita</h1>
+    <p>给 Krita 换一套跟着 DankMaterialShell / matugen 走的 Material You 风格界面：圆角、低对比度、动态配色和菜单动画。</p>
+
+    <p><strong>说明：</strong>这是一个新人用 AI 辅助（vibecoding）慢慢改出来的业余项目，不是专业作品。能用，但可能有 bug，结构也不算漂亮。</p>
+
+    <h2>兼容性说明</h2>
+    <p>主要在 <strong>Krita 6.x / Linux</strong> 上测试。代码保留了 PyQt5 兼容分支，但 Krita 5 没有充分测试。</p>
+
+    <h2>项目关系</h2>
+    <pre>
+Krita UI Redesign（2020，Kapyia &amp; Pedro Reis）
+        ↓
+Krita-MorandiUI（LanRhyme）
+        ↓
+Krita-DMS-UI / DMS Modern UI（本项目）
+    </pre>
+    <p>本项目很大程度上参照了 Krita-MorandiUI；配色另外接的是 DankMaterialShell / matugen 的动态调色板（这是配色来源，不是上游项目）。三个 UI 项目都按 GPL-3.0 分发。</p>
+
+    <h2>包含的内容</h2>
+    <ol>
+        <li><strong>DMS Modern UI 插件</strong>: <code>krita_dms_ui</code></li>
+        <li><strong>SVG 图标素材</strong>: <code>krita_dms_ui/assets/icons</code></li>
+        <li><strong>说明文档</strong>: <code>manual.html</code>、<code>README.md</code></li>
+    </ol>
+
+    <h2>主要功能</h2>
+    <ul>
+        <li>跟随 Krita / matugen / DankMaterialShell 的调色板自动取色</li>
+        <li>菜单、工具栏、面板、输入框、滚动条统一圆角</li>
+        <li>M3 状态层和自绘勾选控件</li>
+        <li>菜单、子菜单、右键菜单、ComboBox、tooltip 淡入淡出</li>
+        <li>换壁纸后监听 <code>.colors</code> 热重载配色，不用重启 Krita</li>
+        <li>欢迎页整理、SpinBox 箭头 SVG、菜单栏左对齐</li>
+        <li><code>DMS UI</code> 菜单：菜单显隐、隐藏快捷键提示、动画开关</li>
+    </ul>
+
+    <h2>使用前的注意</h2>
+    <ul>
+        <li>不要和 Krita-MorandiUI、Style Sheet Loader 等其他 UI 插件同时开启</li>
+        <li>部分 Krita 自己绘制的控件无法通过 QSS 修改</li>
+        <li>切 Krita 样式后勾选控件可能异常，需要重启确认</li>
+    </ul>
+
+    <h2>项目来源 (Credits &amp; Copyright)</h2>
+    <p>本项目很大程度上参照了 <a href="https://github.com/LanRhyme/Krita-MorandiUI">Krita-MorandiUI</a>，并接入了 DankMaterialShell / matugen 的动态配色。</p>
+    <p>Krita-MorandiUI 又基于 2020 年的 <strong>Krita UI Redesign</strong> 插件：</p>
+    <ul>
+        <li><strong>Original Authors:</strong> Kapyia, Pedro Reis (Copyright &copy; 2020)</li>
+    </ul>
+    <p>This program is free software under the GNU General Public License version 3. 详见项目根目录的 <code>LICENSE</code> 文件。</p>
+</body>
+</html>
