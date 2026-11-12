@@ -2,14 +2,12 @@
 
 给 Krita 换一套跟着 DankMaterialShell / matugen 走的 Material You 风格界面：圆角、低对比度、动态配色、菜单动画。
 
-> AI辅助注意
-
 ## 起因
 
 起初在linux 上使用krita作画，发现UI在笔记本+niri+dms的环境下个人不是很满意，虽然有Dank Shell的主题可以让krita动态读取电脑壁纸主题色彩，但色彩上统一了，UI却没有现代化，扁平化，于是基于一种harmony的目标，开始对krita的UI界面进行魔改，我找到了Krita-MorandiUI和Krita UI Redesign，却发现都不是特别满意：Krita UI Redesign似乎无法在krita 6.x上运行，而Krita-MorandiUI中的配色无法实现niri+dms的动态读色，遂便有了此项目krita-DMS-UI。
 本人作画环境：Laptop，CachyOS+niri+dms，Krita 6.x
 
-当前版本：**0.1.0**（第一个整理过的版本）
+当前版本：**0.1.1**
 
 ## 项目关系
 
@@ -22,6 +20,16 @@ Krita-DMS-UI / DMS Modern UI（本项目）
 ```
 
 本项目很大程度上参照了 [Krita-MorandiUI](https://github.com/LanRhyme/Krita-MorandiUI)；配色另外接的是 DankMaterialShell / matugen 的动态调色板（这是配色来源，不是上游项目）。三个 UI 项目都按 GPL-3.0 分发。
+
+## 示例
+
+主界面：
+
+![主界面](krita_dms_ui/assets/examples/main.png)
+
+菜单 / 动画：
+
+![菜单](krita_dms_ui/assets/examples/menu.png)
 
 ## 功能
 
