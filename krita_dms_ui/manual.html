@@ -6,12 +6,9 @@
 </head>
 <body>
     <h1>DMS Modern UI for Krita</h1>
-    <p>给 Krita 换一套跟着 DankMaterialShell / matugen 走的 Material You 风格界面：圆角、低对比度、动态配色和菜单动画。</p>
-
-    <p><strong>说明：</strong>这是一个个人维护的 UI 插件，功能能用，但部分 Krita 自绘控件还改不到，遇到问题欢迎反馈。</p>
-
-    <h2>兼容性说明</h2>
-    <p>主要在 <strong>Krita 6.x / Linux</strong> 上测试。代码保留了 PyQt5 兼容分支，但 Krita 5 没有充分测试。</p>
+    <p>用于配合 dank material shell + niri 环境下动态配色的一套 krita UI 插件。</p>
+    <p>主要作用是修改 krita 的 UI 样式：圆角、现代化、鼠标悬停高亮等。拥有读取主题色彩的功能，配合 dank shell（mutagen）主题风味最佳。</p>
+    <p>当前版本：<strong>1.0</strong></p>
 
     <h2>项目关系</h2>
     <pre>
@@ -21,45 +18,67 @@ Krita-MorandiUI（LanRhyme）
         ↓
 Krita-DMS-UI / DMS Modern UI（本项目）
     </pre>
-    <p>本项目很大程度上参照了 Krita-MorandiUI；配色另外接的是 DankMaterialShell / matugen 的动态调色板（这是配色来源，不是上游项目）。三个 UI 项目都按 GPL-3.0 分发。</p>
+    <p>本项目很大程度上参照了 <a href="https://github.com/LanRhyme/Krita-MorandiUI">Krita-MorandiUI</a>；配色另外接的是 DankMaterialShell / matugen 的动态调色板（这是配色来源，不是上游项目）。三个 UI 项目都按 GPL-3.0 分发。</p>
 
-    <h2>示例</h2>
-    <p>主界面：</p>
-    <p><img src="assets/examples/main.png" alt="主界面" width="720"></p>
-    <p>菜单 / 动画：</p>
-    <p><img src="assets/examples/menu.png" alt="菜单" width="720"></p>
-
-    <h2>包含的内容</h2>
-    <ol>
-        <li><strong>DMS Modern UI 插件</strong>: <code>krita_dms_ui</code></li>
-        <li><strong>SVG 图标素材</strong>: <code>krita_dms_ui/assets/icons</code></li>
-        <li><strong>说明文档</strong>: <code>manual.html</code>、<code>README.md</code></li>
-    </ol>
-
-    <h2>主要功能</h2>
+    <h2>功能</h2>
     <ul>
-        <li>跟随 Krita / matugen / DankMaterialShell 的调色板自动取色</li>
-        <li>菜单、工具栏、面板、输入框、滚动条统一圆角</li>
-        <li>M3 状态层和自绘勾选控件</li>
-        <li>菜单、子菜单、右键菜单、ComboBox、tooltip 淡入淡出</li>
-        <li>换壁纸后监听 <code>.colors</code> 热重载配色，不用重启 Krita</li>
-        <li>欢迎页整理、SpinBox 箭头 SVG、菜单栏左对齐</li>
-        <li><code>DMS UI</code> 菜单：菜单显隐、隐藏快捷键提示、动画开关</li>
+        <li>从 Krita 的 <code>QPalette</code> 取色，跟随 matugen / DankMaterialShell，深色浅色都适配。</li>
+        <li>菜单栏、工具栏、菜单、标签页、面板、输入框、滚动条统一圆角。</li>
+        <li>M3 状态层，勾选控件用 <code>QProxyStyle</code> 自绘。</li>
+        <li>菜单、子菜单、ComboBox、tooltip 淡入淡出，时长跟随 DMS。</li>
+        <li>换壁纸后监听 <code>.colors</code> 热重载配色，不用重启 Krita。</li>
+        <li>欢迎页整理，SpinBox 箭头换成 SVG 图标。</li>
+        <li><code>DMS UI</code> 菜单：菜单显隐、隐藏快捷键提示、动画开关。</li>
     </ul>
 
-    <h2>使用前的注意</h2>
+    <h2>安装</h2>
+    <p>把 <code>krita_dms_ui/</code> 和 <code>krita_dms_ui.desktop</code> 放进 Krita 的 <code>pykrita/</code> 目录：</p>
     <ul>
-        <li>不要和 Krita-MorandiUI、Style Sheet Loader 等其他 UI 插件同时开启</li>
-        <li>部分 Krita 自己绘制的控件无法通过 QSS 修改</li>
-        <li>切 Krita 样式后勾选控件可能异常，需要重启确认</li>
+        <li>Linux：<code>~/.local/share/krita/pykrita/</code></li>
+        <li>Windows：<code>%APPDATA%\krita\pykrita\</code></li>
+        <li>macOS：<code>~/Library/Application Support/Krita/pykrita/</code></li>
+    </ul>
+    <p>Linux 从源码安装可以直接软链接：</p>
+    <pre>
+git clone https://github.com/NoDoFes/Krita-DMS-UI.git
+cd Krita-DMS-UI
+mkdir -p ~/.local/share/krita/pykrita
+ln -sfn "$PWD/krita_dms_ui" ~/.local/share/krita/pykrita/krita_dms_ui
+ln -sfn "$PWD/krita_dms_ui.desktop" ~/.local/share/krita/pykrita/krita_dms_ui.desktop
+    </pre>
+    <p>然后打开 <strong>设置 → 配置 Krita → Python 插件管理器</strong>，勾选 <strong>DMS Modern UI</strong>，重启 Krita。</p>
+
+    <h2>使用</h2>
+    <p>菜单栏最右侧的 <strong>DMS UI</strong> 里可以：</p>
+    <ul>
+        <li>显示 / 隐藏顶部菜单。</li>
+        <li>隐藏菜单栏快捷键提示（个人觉得有些繁杂了，因作画习惯是左手键盘右手数位板）。</li>
+        <li>开关菜单 / 下拉列表动画。</li>
+    </ul>
+    <p>换壁纸后颜色会自动刷新，不需要手动重载。</p>
+
+    <h2>已知问题</h2>
+    <ul>
+        <li>主要是在 Krita 6.x / Linux 上试的，Krita 5 没充分测试。</li>
+        <li>不要和 Krita-MorandiUI、Style Sheet Loader 等 UI 插件同时开。</li>
+        <li>有些 Krita 自己画的控件改不到，只能单独补（比如调整透明度和笔刷大小的箭头，用的是自己做的 SVG）。</li>
+        <li>热重载后颜色和 QSS 会立刻变，但部分 KDE 图标可能要重启 Krita。</li>
+        <li>菜单淡出是把菜单最后一帧盖在主窗口上做的，超出主窗口的部分会被裁掉。</li>
+        <li>勾选控件是 <code>QProxyStyle</code> 自绘的，切 Krita 样式后可能出现问题，还没完全验证。</li>
     </ul>
 
-    <h2>项目来源 (Credits &amp; Copyright)</h2>
-    <p>本项目很大程度上参照了 <a href="https://github.com/LanRhyme/Krita-MorandiUI">Krita-MorandiUI</a>，并接入了 DankMaterialShell / matugen 的动态配色。</p>
-    <p>Krita-MorandiUI 又基于 2020 年的 <strong>Krita UI Redesign</strong> 插件：</p>
+    <h2>来源与许可</h2>
     <ul>
-        <li><strong>Original Authors:</strong> Kapyia, Pedro Reis (Copyright &copy; 2020)</li>
+        <li>本项目：<a href="https://github.com/NoDoFes/Krita-DMS-UI">Krita-DMS-UI</a></li>
+        <li>基于：<a href="https://github.com/LanRhyme/Krita-MorandiUI">Krita-MorandiUI</a></li>
+        <li>MorandiUI 基于 2020 年的 <strong>Krita UI Redesign</strong>
+            <ul>
+                <li>原作者：Kapyia、Pedro Reis</li>
+                <li>Copyright (C) 2020</li>
+                <li>GNU General Public License v3</li>
+            </ul>
+        </li>
     </ul>
-    <p>This program is free software under the GNU General Public License version 3. 详见项目根目录的 <code>LICENSE</code> 文件。</p>
+    <p>本项目也按 <strong>GPL-3.0</strong> 分发，见项目根目录的 <code>LICENSE</code> 文件。本项目的实现离不开上面的项目作者，对他们实际感谢。</p>
 </body>
 </html>
